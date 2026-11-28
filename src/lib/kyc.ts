@@ -93,9 +93,9 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
       return {
         ...business,
         cardTitle: "KYC verified",
-        cardBody: "You can book items that need an ID check.",
+        cardBody: "You can book on Renit.",
         title: "Your ID check passed",
-        body: 'You can now book items that need an ID check. Need to change your PAN? Use "Remove my verification data" below, then check again.',
+        body: 'You can now book on Renit. Need to change your PAN? Use "Remove my verification data" below, then check again.',
         cta: null,
         ctaKind: null,
       };

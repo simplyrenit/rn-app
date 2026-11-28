@@ -2,6 +2,8 @@ import { describe, expect, it, jest } from "@jest/globals";
 
 import { StackActions } from "@react-navigation/native";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { resumable, startIdCheck } from "@/lib/id-check";
 
 jest.mock("@react-native-async-storage/async-storage", () => ({ __esModule: true, default: { getItem: jest.fn(async () => null), setItem: jest.fn(async () => undefined), removeItem: jest.fn(async () => undefined) } }));
@@ -43,5 +45,17 @@ describe("resumable (ENG-447)", () => {
     expect(resumable({ user: "asha", at, params }, undefined, at)).toBeNull(); // signed out
     expect(resumable({ user: "asha", at, params: {} }, "asha", at)).toBeNull();
     expect(resumable("junk", "asha", at)).toBeNull();
+  });
+});
+
+describe("startIdCheck keeps the price screen (ENG-447)", () => {
+  it("saves it for the signed-in account, and not when signed out", () => {
+    const navigation = { dispatch: jest.fn(), getState: () => ({ routes: [{ name: "ReviewAndBook" }] }) };
+    const params = { item: { name: "PRO_1" } } as never;
+    startIdCheck(navigation as never, "none", { user: "asha", params });
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith("kyc_booking_to_resume", expect.stringContaining('"user":"asha"'));
+    (AsyncStorage.setItem as jest.Mock).mockClear();
+    startIdCheck(navigation as never, "none", { user: undefined, params });
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled();
   });
 });

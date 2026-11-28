@@ -1244,8 +1244,6 @@ export function idCheckCopy(
     (quote.id_check !== null && quote.id_check.needed !== "none" && quote.id_check.passed === false);
   if (notPassed) {
     const needed = (title: string, body: string, action: string): IdCheckCopy => ({ state: "needed", title, body, action });
-    // ENG-447: with every booking asking for the check, the item's own tier says "none": there is nothing else to book.
-    const others = quote.id_check?.needed === "none" ? "" : " Items that need no ID check can be booked now.";
     switch (status) {
       case "action_required":
         return needed(
@@ -1257,13 +1255,13 @@ export function idCheckCopy(
       case "in_review":
         return needed(
           "Your ID check is being reviewed",
-          `You can book this once it's approved. We'll send you a notification.${others}`,
+          "You can book this once it's approved. We'll send you a notification.",
           "See where it stands"
         );
       case "rejected":
         return needed(
           "Your ID check didn't pass",
-          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes.${others}`,
+          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes.`,
           "See what to do"
         );
       case "verified":
@@ -1460,7 +1458,7 @@ export function bookErrorText(error: ApiError | null): string {
   if (known) return known;
   switch (error?.code) {
     case "id_check_needed":
-      return "This item needs an ID check before you can book it.";
+      return "Verify your ID to book this item.";
     case "terms_not_accepted":
       return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":

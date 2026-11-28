@@ -78,7 +78,8 @@ export default function KycStatusScreen() {
   const [resumeTo, setResumeTo] = useState<BookingToResume | null>(null);
   const username = userDetails?.username;
   useEffect(() => {
-    if (fromBooking || status !== "verified") return;
+    // A price screen still in the stack is the way back already (its own "Back to your booking").
+    if (fromBooking || status !== "verified" || navState?.routes.some((r) => r.name === "ReviewAndBook")) return;
     let live = true;
     void bookingToResume(username).then((params) => live && setResumeTo(params));
     return () => {
@@ -212,7 +213,7 @@ export default function KycStatusScreen() {
     Alert.alert(
       "Remove your verification data?",
       person
-        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. Items that need an ID check can't be booked until you check again."
+        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. Bookings that need an ID check can't be made until you check again."
         : // A badge the re-check already took off (ENG-348) is not "removed" again.
           `We'll delete the details we hold for your verification, including your Aadhaar record.${
             hadBadge ? " Your Verified business badge will be removed." : ""

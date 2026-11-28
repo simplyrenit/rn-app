@@ -885,14 +885,10 @@ describe("the ID check", () => {
     expect(words("in_review")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
     // The status screen has the whole reason and the right way on (try again, or support for a duplicate).
     expect(words("rejected")).toEqual(["needed", "Your ID check didn't pass", "See what to do"]);
-    // Pending or failed: the customer is told the cheaper items still book.
-    for (const status of ["in_review", "rejected"] as const) {
-      expect(idCheckCopy(needed, null, status)?.body).toMatch(/Items that need no ID check can be booked now\./);
-    }
-    // ENG-447: when every booking asks (the item's own tier is "none"), there is nothing cheaper to point at.
+    // ENG-447: nothing points at "cheaper items" any more: with every booking asking, there are none.
     const everyBooking = withCheck("none", false, ["id_check_needed"]);
     for (const status of ["in_review", "rejected"] as const) {
-      expect(idCheckCopy(everyBooking, null, status)?.body).not.toMatch(/Items that need no ID check/);
+      expect(idCheckCopy(needed, null, status)?.body).not.toMatch(/Items that need no ID check/);
     }
     expect(idCheckCopy(everyBooking, null, "none", "kyc_expired")).toMatchObject({
       title: "Your KYC has expired",
@@ -936,7 +932,7 @@ describe("the ID check", () => {
   it("explains a Book now refused for it", () => {
     expect(
       bookErrorText({ status: 403, code: "id_check_needed", message: null, details: { needed: "id" } })
-    ).toBe("This item needs an ID check before you can book it.");
+    ).toBe("Verify your ID to book this item.");
   });
 });
 
