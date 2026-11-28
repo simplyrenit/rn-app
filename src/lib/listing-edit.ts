@@ -33,6 +33,14 @@ export function readReason(value: unknown): FlagReason | null {
 export const readReasons = (value: unknown): FlagReason[] =>
   Array.isArray(value) ? value.map(readReason).filter((r): r is FlagReason => r !== null) : [];
 
+/** The sub-category a waiting change moves the listing to: the id (a change carries the id, a listing an object), or null. */
+export function waitingCategoryId(pending: PendingEdit | null | undefined): number | null {
+  const waiting = pending?.changes.category;
+  if (typeof waiting === "number") return waiting;
+  const id = isRecord(waiting) ? waiting.id : undefined;
+  return typeof id === "number" ? id : null;
+}
+
 /** `pending_edit` as the product answer carries it, or null when there is none (or it is not one). */
 export function readPendingEdit(value: unknown): PendingEdit | null {
   if (!isRecord(value)) return null;

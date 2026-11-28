@@ -7,7 +7,7 @@ import { EditStepHeader } from "@/components/post/edit-step-header";
 import { HeldFormNotice } from "@/components/product/listing-status";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { ListingItems, itemsPayload } from "@/lib/included-items";
-import { ListingAnswer, ownerView, readPendingEdit, saveOutcome } from "@/lib/listing-edit";
+import { ListingAnswer, ownerView, readPendingEdit, saveOutcome, waitingCategoryId } from "@/lib/listing-edit";
 import { toastSave } from "@/lib/save-toast";
 import { toast } from "@/lib/toast";
 import { RouteProps, useTypedNavigation } from "@/lib/types";
@@ -30,16 +30,8 @@ export default function EditIncludedItems() {
   }));
   const [items, setItems] = useState<ListingItems>(start);
   const pending = readPendingEdit(listing.pending_edit);
-  // A category change that waits is the one the owner sees, and the one these items will go with: its id (a change
-  // carries the id, the listing an object).
-  const waitingCategory = pending?.changes.category;
-  const waitingId =
-    typeof waitingCategory === "number"
-      ? waitingCategory
-      : typeof (waitingCategory as { id?: unknown } | null | undefined)?.id === "number"
-      ? ((waitingCategory as { id: number }).id)
-      : null;
-  const categoryId = waitingId ?? listing.category?.id ?? null;
+  // A category change that waits is the one the owner sees, and the one these items will go with.
+  const categoryId = waitingCategoryId(pending) ?? listing.category?.id ?? null;
   // The section reads the same query: one request.
   const { data: options } = useCategoryChecklist(categoryId);
   const { updateMyProductDetails, loading } = useProfile();

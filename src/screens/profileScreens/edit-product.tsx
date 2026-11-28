@@ -185,6 +185,10 @@ const EditProductScreen: React.FC = () => {
                       name: product.name,
                       categoryId: product.category?.id ?? null,
                       pending: readPendingEdit(product.pending_edit),
+                      liveItems: {
+                        included_items: product.included_items ?? [],
+                        handover_only_items: product.handover_only_items ?? [],
+                      },
                     })
                   }
                   leftIcon="ClipboardDocumentIcon"

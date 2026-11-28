@@ -5,6 +5,7 @@ import {
   MAX_ITEMS,
   addItem,
   itemsOf,
+  itemsWithCategory,
   itemsPayload,
   picksFrom,
   readOptions,
@@ -119,6 +120,21 @@ describe("included items", () => {
     // An included item can't be ticked as used up.
     const glue = ok(addItem(ps5, picks, "Glue"));
     expect(toggleUsedUp(ps5, glue, "glue")).toEqual({ ok: false, why: "both" });
+  });
+
+  it("a re-file drops the old sub-category's items, and undoing a waiting move keeps the live ones", () => {
+    const live = { included_items: ["Air cooler", "Remote control"], handover_only_items: [] };
+    const cleared = { included_items: [], handover_only_items: [] };
+    const waits = (fields: string[]) => ({ state: "flagged" as const, fields, changes: { category: 9 }, flag_reasons: [] });
+    // Nothing waits: another sub-category clears, the same one sends nothing.
+    expect(itemsWithCategory(9, 5, null, live)).toEqual(cleared);
+    expect(itemsWithCategory(5, 5, null, live)).toEqual({});
+    // A move to 9 waits: picking 9 again is no change; a third one clears.
+    expect(itemsWithCategory(9, 5, waits(["category"]), live)).toEqual({});
+    expect(itemsWithCategory(7, 5, waits(["category"]), live)).toEqual(cleared);
+    // Back to the live 5: the live lists go back when the waiting change holds lists, else nothing.
+    expect(itemsWithCategory(5, 5, waits(["category", "included_items"]), live)).toEqual(live);
+    expect(itemsWithCategory(5, 5, waits(["category"]), live)).toEqual({});
   });
 
   it("keeps to 20 items of up to 60 characters", () => {

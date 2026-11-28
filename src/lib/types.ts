@@ -10,6 +10,7 @@ import type { Moment, Side } from "@/lib/capture";
 import type { Plan } from "@/lib/plans";
 import type { ListingDelivery } from "@/lib/delivery";
 import type { ReportKind } from "@/lib/day-of";
+import type { ListingItems } from "@/lib/included-items";
 import type { PendingEdit } from "@/lib/listing-edit";
 import type { FlagReason, ListingStatus } from "@/lib/listing-status";
 import type { Ring } from "@/lib/shop-ring";
@@ -315,13 +316,15 @@ export type RootStackParamList = {
   UnavailabilitySubCat: { category: string; subcategories?: Subcategory[] };
   EditProductAvailability: { dates_blocked: BlockedDates[]; name: string };
   /** `categoryId`: the sub-category the listing has now, so choosing it again can say nothing was changed. */
-  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null };
+  EditCategory: { name: string; categoryId?: number | null; pending?: PendingEdit | null; liveItems?: ListingItems | null };
   EditSubCategories: {
     category: string;
     subcategories?: Subcategory[];
     name: string;
     categoryId?: number | null;
     pending?: PendingEdit | null;
+    /** ENG-454: the listing's own lists as they are live, sent back when a waiting move is undone. */
+    liveItems?: ListingItems | null;
   };
   EditAboutProduct: { data: BackendProduct };
   /** ENG-454: what comes with the listing; the listing as the server has it (the screen lays a waiting change over it). */

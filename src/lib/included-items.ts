@@ -9,6 +9,8 @@
  * Kept free of React so the rules can be tested.
  */
 
+import { PendingEdit, waitingCategoryId } from "@/lib/listing-edit";
+
 export const MAX_ITEMS = 20;
 export const MAX_ITEM_LENGTH = 60;
 
@@ -132,6 +134,7 @@ export function toggleIncluded(options: ChecklistOptions, picks: ItemPicks, item
     const next = { ...picks, ticked: without(picks.ticked, item) };
     return leavesNothing(options, next) ? { ok: false, why: "last" } : { ok: true, picks: next };
   }
+  if (has(picks.usedUp, item)) return { ok: false, why: "both" };
   if (includedOf(options, picks).length >= MAX_ITEMS) return { ok: false, why: "full" };
   return { ok: true, picks: { ...picks, ticked: [...picks.ticked, findIn(offered(options), item) ?? item] } };
 }
@@ -176,3 +179,24 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
   long: `Keep it under ${MAX_ITEM_LENGTH} characters.`,
   both: "An item can't both come back and be used up.",
 };
+
+// ---- Re-filing ----------------------------------------------------------------------------------
+
+/**
+ * What goes with a re-file (ENG-454). Another sub-category than the one the owner sees (a waiting change's, else the
+ * live one): what came with the old one goes, and the new one's list applies. Back to the live one while a move waits:
+ * the live lists, when the waiting change holds lists of its own, or the server would apply those with the move undone.
+ */
+export function itemsWithCategory(
+  picked: number | undefined,
+  live: number | null,
+  pending: PendingEdit | null | undefined,
+  liveItems: ListingItems | null | undefined
+): Partial<ListingItems> {
+  const waiting = waitingCategoryId(pending);
+  if (waiting !== null && picked === live && picked !== waiting) {
+    const held = pending?.fields.some((f) => f === "included_items" || f === "handover_only_items");
+    return held && liveItems ? liveItems : {};
+  }
+  return picked !== (waiting ?? live) ? { included_items: [], handover_only_items: [] } : {};
+}
