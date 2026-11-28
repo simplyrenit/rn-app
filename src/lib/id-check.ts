@@ -54,7 +54,9 @@ export function forgetBookingToResume() {
 export function startIdCheck(
   navigation: NavigationUseType,
   status: KycStatus | undefined,
-  resume?: { user: string | undefined; params: BookingToResume }
+  resume?: { user: string | undefined; params: BookingToResume },
+  // ENG-449: an owner's publish locked on the ID check comes back to its listing the same way.
+  source: "booking" | "listing" = "booking"
 ) {
   // A second tap while the first screen opens would push it twice.
   const routes = navigation.getState?.()?.routes ?? [];
@@ -65,8 +67,8 @@ export function startIdCheck(
     AsyncStorage.setItem(RESUME_KEY, JSON.stringify(saved)).catch(() => undefined);
   }
   if (status === undefined || status === "none") {
-    navigation.dispatch(StackActions.push("KycIntro", { source: "booking" }));
+    navigation.dispatch(StackActions.push("KycIntro", { source }));
   } else {
-    navigation.dispatch(StackActions.push("KycStatus", { source: "booking" }));
+    navigation.dispatch(StackActions.push("KycStatus", { source }));
   }
 }

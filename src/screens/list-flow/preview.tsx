@@ -1,5 +1,6 @@
 import { buildCreatePayload, submitListing } from "@/backend/list-flow/submit";
-import { StackActions } from "@react-navigation/native";
+import { useKycStatus } from "@/backend/kyc";
+import { startIdCheck } from "@/lib/id-check";
 import { saveOfferedAddress } from "@/backend/addresses-api";
 import { placeFor } from "@/backend/list-flow/pickup-location";
 import { termsQueryKey } from "@/backend/terms";
@@ -90,6 +91,7 @@ export default function ListPreviewScreen() {
   const { color, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { userDetails } = useGlobalContext();
+  const { data: kyc } = useKycStatus(); // ENG-449: where "Verify my ID" opens the check
   const flow = useListDraft();
   const { draft } = flow;
   const queryClient = useQueryClient();
@@ -245,7 +247,8 @@ export default function ListPreviewScreen() {
             { text: "Not now", style: "cancel" },
             {
               text: "Verify my ID",
-              onPress: () => navigation.dispatch(StackActions.push("KycIntro", { source: "listing" })),
+              // Where the check stands: a check already in review opens its status, not a new form.
+              onPress: () => startIdCheck(navigation, kyc?.kyc_status, undefined, "listing"),
             },
           ]);
           return;

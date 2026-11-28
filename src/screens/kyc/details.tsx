@@ -126,8 +126,8 @@ export default function KycDetailsScreen() {
 
   const toStatus = (justReturned = false) => {
     if (fromBooking) {
-      // Back from the status screen lands on the price screen it came from (ENG-351), never on a form that held a PAN:
-      // every verification screen above the price screen goes, the status screen takes their place.
+      // Back from the status screen lands on the price screen or listing it came from (ENG-351, ENG-449), never on a
+      // form that held a PAN: every verification screen above it goes, the status screen takes their place.
       navigation.dispatch((state) => {
         const routes = [...state.routes];
         while (routes.length > 1 && routes[routes.length - 1].name.startsWith("Kyc")) routes.pop();

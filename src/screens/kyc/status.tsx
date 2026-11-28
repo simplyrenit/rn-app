@@ -52,8 +52,8 @@ export default function KycStatusScreen() {
     route.params?.source ?? (below === "ReviewAndBook" ? "booking" : below === "ListPreview" ? "listing" : undefined);
   const fromBooking = from !== undefined;
   const backLabel = from === "listing" ? "Back to your listing" : "Back to your booking";
-  // From a price screen the intro is pushed: `navigate` would jump back to an older intro under the price screen
-  // and drop it, with its product and dates.
+  // From a price screen or a listing the intro is pushed: `navigate` would jump back to an older intro under that
+  // screen and drop it, with its product and dates.
   const openIntro = (extra: { supersede?: true } = {}) => {
     const params = { source: from ?? ("profile" as const), ...extra };
     if (fromBooking) navigation.dispatch(StackActions.push("KycIntro", params));
