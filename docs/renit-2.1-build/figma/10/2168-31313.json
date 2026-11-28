@@ -1,0 +1,4976 @@
+{
+  "nodes": [
+    {
+      "id": "2168:31313",
+      "name": "list-review · what comes with it, list error",
+      "type": "FRAME",
+      "x": 13710,
+      "y": 120,
+      "width": 390,
+      "height": 844,
+      "fill": "#FFFFFF",
+      "children": [
+        {
+          "id": "2168:31314",
+          "name": "Content",
+          "type": "FRAME",
+          "x": 24,
+          "y": -1569,
+          "width": 342,
+          "height": 2745,
+          "fill": null,
+          "layout": {
+            "mode": "VERTICAL",
+            "padding": [
+              8,
+              0,
+              32,
+              0
+            ],
+            "itemSpacing": 32,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+          },
+          "children": [
+            {
+              "id": "2168:31315",
+              "name": "Stepper",
+              "type": "INSTANCE",
+              "x": 0,
+              "y": 8,
+              "width": 342,
+              "height": 4,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 8,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "mainComponent": "Stepper / Step=3",
+              "componentProperties": {
+                "Show label#2074:60": false,
+                "Step": "3"
+              },
+              "children": [
+                {
+                  "id": "I2168:31315;2074:14435",
+                  "name": "Segments",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 4,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31315;2074:14436",
+                      "name": "Segment 1",
+                      "type": "RECTANGLE",
+                      "x": 0,
+                      "y": 0,
+                      "width": 82.5,
+                      "height": 4,
+                      "fill": "#635BE8"
+                    },
+                    {
+                      "id": "I2168:31315;2074:14437",
+                      "name": "Segment 2",
+                      "type": "RECTANGLE",
+                      "x": 86.5,
+                      "y": 0,
+                      "width": 82.5,
+                      "height": 4,
+                      "fill": "#635BE8"
+                    },
+                    {
+                      "id": "I2168:31315;2074:14438",
+                      "name": "Segment 3",
+                      "type": "RECTANGLE",
+                      "x": 173,
+                      "y": 0,
+                      "width": 82.5,
+                      "height": 4,
+                      "fill": "#635BE8"
+                    },
+                    {
+                      "id": "I2168:31315;2074:14439",
+                      "name": "Segment 4",
+                      "type": "RECTANGLE",
+                      "x": 259.5,
+                      "y": 0,
+                      "width": 82.5,
+                      "height": 4,
+                      "fill": "#E6E6E6"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31316",
+              "name": "Intro",
+              "type": "FRAME",
+              "x": 0,
+              "y": 44,
+              "width": 342,
+              "height": 124,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 8,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31317",
+                  "name": "Two quick checks, then submit.",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 56,
+                  "fill": "#000000",
+                  "characters": "Two quick checks,\nthen submit.",
+                  "fontSize": 20,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Bold",
+                    "variationSettings": {
+                      "wght": 700
+                    }
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 28
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": "#000000",
+                      "opacity": 1
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31318",
+                  "name": "We filled in what we were sure about and left the rest blank. Set a price and confirm the condition, and glance over anything marked AI.",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 64,
+                  "width": 342,
+                  "height": 60,
+                  "fill": "#000000",
+                  "characters": "We filled in what we were sure about and left the rest blank. Set a price and confirm the condition, and glance over anything marked AI.",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Regular",
+                    "variationSettings": {
+                      "wght": 400
+                    }
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": "#000000",
+                      "opacity": 0.7
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31319",
+              "name": "Photos",
+              "type": "FRAME",
+              "x": 0,
+              "y": 200,
+              "width": 342,
+              "height": 72,
+              "fill": null,
+              "layout": {
+                "mode": "HORIZONTAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 8,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31320",
+                  "name": "Photo 1",
+                  "type": "RECTANGLE",
+                  "x": 0,
+                  "y": 0,
+                  "width": 72,
+                  "height": 72,
+                  "fill": "#F3F3F6"
+                },
+                {
+                  "id": "2168:31321",
+                  "name": "Photo 2",
+                  "type": "RECTANGLE",
+                  "x": 80,
+                  "y": 0,
+                  "width": 72,
+                  "height": 72,
+                  "fill": "#F3F3F6"
+                },
+                {
+                  "id": "2168:31322",
+                  "name": "Add more photos",
+                  "type": "FRAME",
+                  "x": 160,
+                  "y": 0,
+                  "width": 181,
+                  "height": 72,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      16,
+                      0,
+                      16
+                    ],
+                    "itemSpacing": 6,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31323",
+                      "name": "heroicons-mini/plus",
+                      "type": "INSTANCE",
+                      "x": 17,
+                      "y": 27,
+                      "width": 18,
+                      "height": 18,
+                      "fill": null,
+                      "mainComponent": "heroicons-mini/plus",
+                      "componentProperties": {},
+                      "children": [
+                        {
+                          "id": "I2168:31323;341:8237",
+                          "name": "Icon",
+                          "type": "VECTOR",
+                          "x": 3.6,
+                          "y": 3.6,
+                          "width": 10.8,
+                          "height": 10.8,
+                          "fill": "#000000"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31324",
+                      "name": "add more any time",
+                      "type": "TEXT",
+                      "x": 41,
+                      "y": 26,
+                      "width": 123,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "add more any time",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31325",
+              "name": "Check 1 · how you rent it",
+              "type": "FRAME",
+              "x": 0,
+              "y": 304,
+              "width": 342,
+              "height": 292,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31326",
+                  "name": "Header",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 44,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31327",
+                      "name": "Section header",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 24,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ],
+                        "itemSpacing": 12,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": "Section header",
+                      "componentProperties": {
+                        "Link#2073:6": "See all",
+                        "Show link#2073:7": false,
+                        "Title#2073:5": "Check 1 · how you rent it"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31327;2073:14342",
+                          "name": "Title",
+                          "type": "TEXT",
+                          "x": 0,
+                          "y": 0,
+                          "width": 342,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "Check 1 · how you rent it",
+                          "fontSize": 18,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Bold",
+                            "variationSettings": {
+                              "wght": 700
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31328",
+                      "name": "Pick every way you rent it out. Each one gets its own price.",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Pick every way you rent it out. Each one gets its own price.",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31329",
+                  "name": "Plan chips",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 56,
+                  "width": 342,
+                  "height": 40,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31330",
+                      "name": "Chip",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 0,
+                      "width": 68,
+                      "height": 40,
+                      "fill": "#EDEDFC",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 6,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": "Chip / State=Selected",
+                      "componentProperties": {
+                        "Label#2073:38": "Daily",
+                        "State": "Selected"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31330;2073:14387",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 10,
+                          "width": 34,
+                          "height": 20,
+                          "fill": "#635BE8",
+                          "characters": "Daily",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#635BE8",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31331",
+                      "name": "Chip",
+                      "type": "INSTANCE",
+                      "x": 76,
+                      "y": 0,
+                      "width": 84,
+                      "height": 40,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 6,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": "Chip / State=Default",
+                      "componentProperties": {
+                        "Label#2073:38": "Weekly",
+                        "State": "Default"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31331;2073:14385",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 10,
+                          "width": 50,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Weekly",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Medium",
+                            "variationSettings": {
+                              "wght": 500
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31332",
+                      "name": "Chip",
+                      "type": "INSTANCE",
+                      "x": 168,
+                      "y": 0,
+                      "width": 88,
+                      "height": 40,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 6,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": "Chip / State=Default",
+                      "componentProperties": {
+                        "Label#2073:38": "Monthly",
+                        "State": "Default"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31332;2073:14385",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 10,
+                          "width": 54,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Monthly",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Medium",
+                            "variationSettings": {
+                              "wght": 500
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31333",
+                  "name": "Plan · Daily",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 108,
+                  "width": 342,
+                  "height": 152,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      4,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 12,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31334",
+                      "name": "Plan head",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 4,
+                      "width": 342,
+                      "height": 42,
+                      "fill": null,
+                      "layout": {
+                        "mode": "VERTICAL",
+                        "padding": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ],
+                        "itemSpacing": 2,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31335",
+                          "name": "Daily",
+                          "type": "TEXT",
+                          "x": 0,
+                          "y": 0,
+                          "width": 342,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "Daily",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31336",
+                          "name": "Think about what you'd pay to borrow it for a day.",
+                          "type": "TEXT",
+                          "x": 0,
+                          "y": 26,
+                          "width": 342,
+                          "height": 16,
+                          "fill": "#000000",
+                          "characters": "Think about what you'd pay to borrow it for a day.",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31337",
+                      "name": "Price box",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 58,
+                      "width": 342,
+                      "height": 50,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          12,
+                          16,
+                          12,
+                          16
+                        ],
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31338",
+                          "name": "₹",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 13,
+                          "width": 11,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "₹",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31339",
+                          "name": "40",
+                          "type": "TEXT",
+                          "x": 36,
+                          "y": 13,
+                          "width": 245,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "40",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31340",
+                          "name": "/day",
+                          "type": "TEXT",
+                          "x": 289,
+                          "y": 13,
+                          "width": 36,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "/day",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31341",
+                      "name": "Minimum rental",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 120,
+                      "width": 342,
+                      "height": 32,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ],
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31342",
+                          "name": "Minimum rental",
+                          "type": "TEXT",
+                          "x": 0,
+                          "y": 6,
+                          "width": 182,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Minimum rental",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31343",
+                          "name": "One day less (disabled)",
+                          "type": "FRAME",
+                          "x": 190,
+                          "y": 0,
+                          "width": 32,
+                          "height": 32,
+                          "fill": "#FFFFFF",
+                          "children": [
+                            {
+                              "id": "2168:31344",
+                              "name": "Rectangle",
+                              "type": "RECTANGLE",
+                              "x": 10,
+                              "y": 15,
+                              "width": 12,
+                              "height": 2,
+                              "fill": "#635BE8"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31345",
+                          "name": "1 day",
+                          "type": "TEXT",
+                          "x": 230,
+                          "y": 6,
+                          "width": 72,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "1 day",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31346",
+                          "name": "One day more",
+                          "type": "FRAME",
+                          "x": 310,
+                          "y": 0,
+                          "width": 32,
+                          "height": 32,
+                          "fill": "#FFFFFF",
+                          "children": [
+                            {
+                              "id": "2168:31347",
+                              "name": "heroicons-mini/plus",
+                              "type": "INSTANCE",
+                              "x": 7,
+                              "y": 7,
+                              "width": 18,
+                              "height": 18,
+                              "fill": null,
+                              "mainComponent": "heroicons-mini/plus",
+                              "componentProperties": {},
+                              "children": [
+                                {
+                                  "id": "I2168:31347;341:8237",
+                                  "name": "Icon",
+                                  "type": "VECTOR",
+                                  "x": 3.6,
+                                  "y": 3.6,
+                                  "width": 10.8,
+                                  "height": 10.8,
+                                  "fill": "#635BE8"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31348",
+                  "name": "Deposit line",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 272,
+                  "width": 342,
+                  "height": 20,
+                  "fill": null,
+                  "characters": "Deposit ₹120 · 3 × your price a day · change",
+                  "fontSize": 14,
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": "mixed"
+                }
+              ]
+            },
+            {
+              "id": "2168:31349",
+              "name": "Check 2 · condition",
+              "type": "FRAME",
+              "x": 0,
+              "y": 628,
+              "width": 342,
+              "height": 160,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31350",
+                  "name": "Section header",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 24,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 12,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "mainComponent": "Section header",
+                  "componentProperties": {
+                    "Link#2073:6": "See all",
+                    "Show link#2073:7": false,
+                    "Title#2073:5": "Check 2 · condition"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31350;2073:14342",
+                      "name": "Title",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 24,
+                      "fill": "#000000",
+                      "characters": "Check 2 · condition",
+                      "fontSize": 18,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Bold",
+                        "variationSettings": {
+                          "wght": 700
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31351",
+                  "name": "Condition options",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 36,
+                  "width": 342,
+                  "height": 96,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 10,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31352",
+                      "name": "Option · Excellent",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 0,
+                      "width": 106.67,
+                      "height": 96,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "VERTICAL",
+                        "padding": [
+                          10,
+                          12,
+                          10,
+                          12
+                        ],
+                        "itemSpacing": 2,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31353",
+                          "name": "Excellent",
+                          "type": "TEXT",
+                          "x": 13,
+                          "y": 11,
+                          "width": 80.67,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Excellent",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31354",
+                          "name": "like new",
+                          "type": "TEXT",
+                          "x": 13,
+                          "y": 33,
+                          "width": 80.67,
+                          "height": 16,
+                          "fill": "#000000",
+                          "characters": "like new",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31355",
+                      "name": "Option · Good",
+                      "type": "FRAME",
+                      "x": 116.67,
+                      "y": 0,
+                      "width": 108.67,
+                      "height": 96,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "VERTICAL",
+                        "padding": [
+                          10,
+                          12,
+                          10,
+                          12
+                        ],
+                        "itemSpacing": 2,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31356",
+                          "name": "Good",
+                          "type": "TEXT",
+                          "x": 14,
+                          "y": 12,
+                          "width": 80.67,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Good",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31357",
+                          "name": "light signs of use",
+                          "type": "TEXT",
+                          "x": 14,
+                          "y": 34,
+                          "width": 80.67,
+                          "height": 32,
+                          "fill": "#000000",
+                          "characters": "light signs of use",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31358",
+                          "name": "AI's guess",
+                          "type": "TEXT",
+                          "x": 14,
+                          "y": 68,
+                          "width": 80.67,
+                          "height": 16,
+                          "fill": "#635BE8",
+                          "characters": "AI's guess",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#635BE8",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31359",
+                      "name": "Option · Fair",
+                      "type": "FRAME",
+                      "x": 235.33,
+                      "y": 0,
+                      "width": 106.67,
+                      "height": 96,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "VERTICAL",
+                        "padding": [
+                          10,
+                          12,
+                          10,
+                          12
+                        ],
+                        "itemSpacing": 2,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31360",
+                          "name": "Fair",
+                          "type": "TEXT",
+                          "x": 13,
+                          "y": 11,
+                          "width": 80.67,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Fair",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31361",
+                          "name": "clear wear",
+                          "type": "TEXT",
+                          "x": 13,
+                          "y": 33,
+                          "width": 80.67,
+                          "height": 16,
+                          "fill": "#000000",
+                          "characters": "clear wear",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31362",
+                  "name": "Pick what's true — it protects you if there's ever a dispute.",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 144,
+                  "width": 342,
+                  "height": 16,
+                  "fill": "#000000",
+                  "characters": "Pick what's true — it protects you if there's ever a dispute.",
+                  "fontSize": 12,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Regular",
+                    "variationSettings": {
+                      "wght": 400
+                    }
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 16
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": "#000000",
+                      "opacity": 0.6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31363",
+              "name": "Category",
+              "type": "FRAME",
+              "x": 0,
+              "y": 820,
+              "width": 342,
+              "height": 82,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31364",
+                  "name": "Label · Category · AI",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 20,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31365",
+                      "name": "Category · AI",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Category · AI",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31366",
+                  "name": "Category picker",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 32,
+                  "width": 342,
+                  "height": 50,
+                  "fill": "#FFFFFF",
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      12,
+                      12,
+                      12,
+                      16
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31367",
+                      "name": "heroicons-outline/book-open (J local)",
+                      "type": "INSTANCE",
+                      "x": 17,
+                      "y": 15,
+                      "width": 20,
+                      "height": 20,
+                      "fill": null,
+                      "mainComponent": "heroicons-outline/book-open (J local)",
+                      "componentProperties": {},
+                      "children": [
+                        {
+                          "id": "I2168:31367;2097:31401",
+                          "name": "Vector",
+                          "type": "VECTOR",
+                          "x": 2.5,
+                          "y": 3.12,
+                          "width": 15,
+                          "height": 13.79,
+                          "fill": null
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31368",
+                      "name": "Mirrorless · Cameras",
+                      "type": "TEXT",
+                      "x": 45,
+                      "y": 13,
+                      "width": 256,
+                      "height": 24,
+                      "fill": "#000000",
+                      "characters": "Mirrorless · Cameras",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31369",
+                      "name": "heroicons-mini/chevron-right",
+                      "type": "INSTANCE",
+                      "x": 309,
+                      "y": 15,
+                      "width": 20,
+                      "height": 20,
+                      "fill": null,
+                      "mainComponent": "heroicons-mini/chevron-right",
+                      "componentProperties": {},
+                      "children": [
+                        {
+                          "id": "I2168:31369;341:7038",
+                          "name": "Icon",
+                          "type": "VECTOR",
+                          "x": 7,
+                          "y": 15,
+                          "width": 10,
+                          "height": 6,
+                          "fill": "#000000"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31370",
+              "name": "Specs",
+              "type": "FRAME",
+              "x": 0,
+              "y": 934,
+              "width": 342,
+              "height": 247,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31371",
+                  "name": "Label · Specs",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 20,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31372",
+                      "name": "Specs",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Specs",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31373",
+                  "name": "Specs card",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 32,
+                  "width": 342,
+                  "height": 215,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 0,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31374",
+                      "name": "Row · Author",
+                      "type": "FRAME",
+                      "x": 1,
+                      "y": 1,
+                      "width": 340,
+                      "height": 49,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          12,
+                          12,
+                          12,
+                          16
+                        ],
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31375",
+                          "name": "Sensor",
+                          "type": "TEXT",
+                          "x": 16,
+                          "y": 14,
+                          "width": 96,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Sensor",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31376",
+                          "name": "Full frame",
+                          "type": "TEXT",
+                          "x": 120,
+                          "y": 12,
+                          "width": 180,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "Full frame",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31377",
+                          "name": "heroicons-mini/chevron-right",
+                          "type": "INSTANCE",
+                          "x": 308,
+                          "y": 14,
+                          "width": 20,
+                          "height": 20,
+                          "fill": null,
+                          "mainComponent": "heroicons-mini/chevron-right",
+                          "componentProperties": {},
+                          "children": [
+                            {
+                              "id": "I2168:31377;341:7038",
+                              "name": "Icon",
+                              "type": "VECTOR",
+                              "x": 7,
+                              "y": 15,
+                              "width": 10,
+                              "height": 6,
+                              "fill": "#000000"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31378",
+                      "name": "Row · Format",
+                      "type": "FRAME",
+                      "x": 1,
+                      "y": 50,
+                      "width": 340,
+                      "height": 49,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          12,
+                          12,
+                          12,
+                          16
+                        ],
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31379",
+                          "name": "Mount",
+                          "type": "TEXT",
+                          "x": 16,
+                          "y": 14,
+                          "width": 96,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Mount",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31380",
+                          "name": "Sony E",
+                          "type": "TEXT",
+                          "x": 120,
+                          "y": 12,
+                          "width": 114,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "Sony E",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31381",
+                          "name": "Status pill",
+                          "type": "INSTANCE",
+                          "x": 242,
+                          "y": 12,
+                          "width": 58,
+                          "height": 24,
+                          "fill": "#FFFAEB",
+                          "layout": {
+                            "mode": "HORIZONTAL",
+                            "padding": [
+                              0,
+                              10,
+                              0,
+                              10
+                            ],
+                            "itemSpacing": 0,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "CENTER"
+                          },
+                          "mainComponent": "Status pill / Tone=Warning",
+                          "componentProperties": {
+                            "Tone": "Warning"
+                          },
+                          "children": [
+                            {
+                              "id": "I2168:31381;2073:14375",
+                              "name": "Label",
+                              "type": "TEXT",
+                              "x": 10,
+                              "y": 4,
+                              "width": 38,
+                              "height": 16,
+                              "fill": "#B54708",
+                              "characters": "Check",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold",
+                                "variationSettings": {
+                                  "wght": 600
+                                }
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                {
+                                  "type": "SOLID",
+                                  "color": "#B54708",
+                                  "opacity": 1
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31382",
+                          "name": "heroicons-mini/chevron-right",
+                          "type": "INSTANCE",
+                          "x": 308,
+                          "y": 14,
+                          "width": 20,
+                          "height": 20,
+                          "fill": null,
+                          "mainComponent": "heroicons-mini/chevron-right",
+                          "componentProperties": {},
+                          "children": [
+                            {
+                              "id": "I2168:31382;341:7038",
+                              "name": "Icon",
+                              "type": "VECTOR",
+                              "x": 7,
+                              "y": 15,
+                              "width": 10,
+                              "height": 6,
+                              "fill": "#000000"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31383",
+                      "name": "Row · Language",
+                      "type": "FRAME",
+                      "x": 1,
+                      "y": 99,
+                      "width": 340,
+                      "height": 49,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          12,
+                          12,
+                          12,
+                          16
+                        ],
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31384",
+                          "name": "Megapixels",
+                          "type": "TEXT",
+                          "x": 16,
+                          "y": 14,
+                          "width": 96,
+                          "height": 20,
+                          "fill": "#000000",
+                          "characters": "Megapixels",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.7
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31385",
+                          "name": "33 MP",
+                          "type": "TEXT",
+                          "x": 120,
+                          "y": 12,
+                          "width": 180,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "33 MP",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31386",
+                          "name": "heroicons-mini/chevron-right",
+                          "type": "INSTANCE",
+                          "x": 308,
+                          "y": 14,
+                          "width": 20,
+                          "height": 20,
+                          "fill": null,
+                          "mainComponent": "heroicons-mini/chevron-right",
+                          "componentProperties": {},
+                          "children": [
+                            {
+                              "id": "I2168:31386;341:7038",
+                              "name": "Icon",
+                              "type": "VECTOR",
+                              "x": 7,
+                              "y": 15,
+                              "width": 10,
+                              "height": 6,
+                              "fill": "#000000"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31387",
+                      "name": "Row · Add more detail",
+                      "type": "FRAME",
+                      "x": 1,
+                      "y": 148,
+                      "width": 340,
+                      "height": 66,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          12,
+                          12,
+                          12,
+                          16
+                        ],
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2168:31388",
+                          "name": "Text",
+                          "type": "FRAME",
+                          "x": 16,
+                          "y": 12,
+                          "width": 284,
+                          "height": 42,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "padding": [
+                              0,
+                              0,
+                              0,
+                              0
+                            ],
+                            "itemSpacing": 2,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2168:31389",
+                              "name": "Add more detail",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 0,
+                              "width": 284,
+                              "height": 24,
+                              "fill": "#000000",
+                              "characters": "Add more detail",
+                              "fontSize": 16,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold",
+                                "variationSettings": {
+                                  "wght": 600
+                                }
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 24
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                {
+                                  "type": "SOLID",
+                                  "color": "#000000",
+                                  "opacity": 1
+                                }
+                              ]
+                            },
+                            {
+                              "id": "2168:31390",
+                              "name": "Video, Weight and more. Optional.",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 26,
+                              "width": 284,
+                              "height": 16,
+                              "fill": "#000000",
+                              "characters": "Video, Weight and more. Optional.",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular",
+                                "variationSettings": {
+                                  "wght": 400
+                                }
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                {
+                                  "type": "SOLID",
+                                  "color": "#000000",
+                                  "opacity": 0.6
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2168:31391",
+                          "name": "heroicons-mini/chevron-right",
+                          "type": "INSTANCE",
+                          "x": 308,
+                          "y": 23,
+                          "width": 20,
+                          "height": 20,
+                          "fill": null,
+                          "mainComponent": "heroicons-mini/chevron-right",
+                          "componentProperties": {},
+                          "children": [
+                            {
+                              "id": "I2168:31391;341:7038",
+                              "name": "Icon",
+                              "type": "VECTOR",
+                              "x": 7,
+                              "y": 15,
+                              "width": 10,
+                              "height": 6,
+                              "fill": "#000000"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31392",
+              "name": "Details",
+              "type": "FRAME",
+              "x": 0,
+              "y": 1213,
+              "width": 342,
+              "height": 550,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 24,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31393",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 76,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Filled",
+                  "componentProperties": {
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Show helper#2073:58": false,
+                    "Helper#2073:57": "As on your PAN card",
+                    "Label#2073:55": "Title · AI",
+                    "State": "Filled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31393;2073:14398",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 52,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Title · AI",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31393;2073:14399",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31393;2073:14400",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "Sony A7 IV",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31394",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 100,
+                  "width": 342,
+                  "height": 76,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Filled",
+                  "componentProperties": {
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Show helper#2073:58": false,
+                    "Helper#2073:57": "As on your PAN card",
+                    "Label#2073:55": "Brand · AI",
+                    "State": "Filled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31394;2073:14398",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 64,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Brand · AI",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31394;2073:14399",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31394;2073:14400",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "Sony",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31395",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 200,
+                  "width": 342,
+                  "height": 100,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Default",
+                  "componentProperties": {
+                    "Show helper#2073:58": true,
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Helper#2073:57": "Label partly readable, photo 2 — add the model",
+                    "Label#2073:55": "Model",
+                    "State": "Default"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31395;2073:14393",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 43,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Model",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31395;2073:14394",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31395;2073:14395",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "e.g. CFI-1216A",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.6
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31395;2073:14396",
+                      "name": "Helper",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 84,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Label partly readable, photo 2 — add the model",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31396",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 324,
+                  "width": 342,
+                  "height": 126,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Filled",
+                  "componentProperties": {
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Show helper#2073:58": false,
+                    "Helper#2073:57": "As on your PAN card",
+                    "Label#2073:55": "Description · AI",
+                    "State": "Filled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31396;2073:14398",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 103,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Description · AI",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31396;2073:14399",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 98,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          12,
+                          16,
+                          12,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31396;2073:14400",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 13,
+                          "width": 308,
+                          "height": 72,
+                          "fill": "#000000",
+                          "characters": "Full-frame mirrorless body, 33 MP, shoots 4K. Comes with battery, charger and strap.",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31397",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 474,
+                  "width": 342,
+                  "height": 76,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Default",
+                  "componentProperties": {
+                    "Show helper#2073:58": false,
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Helper#2073:57": "As on your PAN card",
+                    "Label#2073:55": "Usage tips · optional",
+                    "State": "Default"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31397;2073:14393",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 138,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Usage tips · optional",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31397;2073:14394",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31397;2073:14395",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "e.g. Update the console before the first game",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 0.6
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31468",
+              "name": "NEW · What comes with it",
+              "type": "FRAME",
+              "x": 0,
+              "y": 1795,
+              "width": 342,
+              "height": 90,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 8,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31469",
+                  "name": "NEW · Header",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 38,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31470",
+                      "name": "NEW · Title",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "What comes with it",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31471",
+                      "name": "NEW · Hint",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 22,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Ticked items are checked at handover and return.",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31472",
+                  "name": "NEW · Load error",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 46,
+                  "width": 342,
+                  "height": 44,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 14,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31473",
+                      "name": "NEW · Error text",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 12,
+                      "width": 236,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "We couldn't load the list.",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31474",
+                      "name": "NEW · Button · Try again",
+                      "type": "INSTANCE",
+                      "x": 250,
+                      "y": 0,
+                      "width": 92,
+                      "height": 44,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 4,
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": "Button / Type=Secondary",
+                      "componentProperties": {
+                        "Left Icon#309:6": "1:131",
+                        "Right Icon#309:5": "1:129",
+                        "Label#309:8": "Try again",
+                        "Show Left Icon#309:4": false,
+                        "Show Right Icon#309:7": false,
+                        "Type": "Secondary"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31474;309:3551",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 16,
+                          "y": 12,
+                          "width": 60,
+                          "height": 20,
+                          "fill": "#635BE8",
+                          "characters": "Try again",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#635BE8",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31398",
+              "name": "Pickup",
+              "type": "FRAME",
+              "x": 0,
+              "y": 1917,
+              "width": 342,
+              "height": 134,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31399",
+                  "name": "Label · Pickup",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 40,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31400",
+                      "name": "Pickup",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Pickup",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31401",
+                      "name": "Renters see only your area until they book.",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 24,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Renters see only your area until they book.",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31402",
+                  "name": "Pickup picker",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 52,
+                  "width": 342,
+                  "height": 50,
+                  "fill": "#FFFFFF",
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      12,
+                      12,
+                      12,
+                      16
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31403",
+                      "name": "heroicons-outline/map-pin",
+                      "type": "INSTANCE",
+                      "x": 17,
+                      "y": 15,
+                      "width": 20,
+                      "height": 20,
+                      "fill": null,
+                      "mainComponent": "heroicons-outline/map-pin",
+                      "componentProperties": {},
+                      "children": [
+                        {
+                          "id": "I2168:31403;341:8002",
+                          "name": "Icon",
+                          "type": "VECTOR",
+                          "x": 3.75,
+                          "y": 2.5,
+                          "width": 12.5,
+                          "height": 15.63,
+                          "fill": null
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31404",
+                      "name": "Thane West",
+                      "type": "TEXT",
+                      "x": 45,
+                      "y": 13,
+                      "width": 256,
+                      "height": 24,
+                      "fill": "#000000",
+                      "characters": "Thane West",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31405",
+                      "name": "heroicons-mini/chevron-right",
+                      "type": "INSTANCE",
+                      "x": 309,
+                      "y": 15,
+                      "width": 20,
+                      "height": 20,
+                      "fill": null,
+                      "mainComponent": "heroicons-mini/chevron-right",
+                      "componentProperties": {},
+                      "children": [
+                        {
+                          "id": "I2168:31405;341:7038",
+                          "name": "Icon",
+                          "type": "VECTOR",
+                          "x": 7,
+                          "y": 15,
+                          "width": 10,
+                          "height": 6,
+                          "fill": "#000000"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31406",
+                  "name": "Edit flat or landmark for this listing",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 114,
+                  "width": 342,
+                  "height": 20,
+                  "fill": "#635BE8",
+                  "characters": "Edit flat or landmark for this listing",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "SemiBold",
+                    "variationSettings": {
+                      "wght": 600
+                    }
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": "#635BE8",
+                      "opacity": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31407",
+              "name": "Worth",
+              "type": "FRAME",
+              "x": 0,
+              "y": 2083,
+              "width": 342,
+              "height": 172,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31408",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 116,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Filled",
+                  "componentProperties": {
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Show helper#2073:58": true,
+                    "Helper#2073:57": "What it would cost to replace. It decides whether you must check the customer's ID at the handover.",
+                    "Label#2073:55": "Worth",
+                    "State": "Filled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31408;2073:14398",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 42,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Worth",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31408;2073:14399",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31408;2073:14400",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "₹1,60,000",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31408;2073:14401",
+                      "name": "Helper",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 84,
+                      "width": 342,
+                      "height": 32,
+                      "fill": "#000000",
+                      "characters": "What it would cost to replace. It decides whether you must check the customer's ID at the handover.",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31409",
+                  "name": "Confirm worth",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 128,
+                  "width": 342,
+                  "height": 44,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 16,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31410",
+                      "name": "Is this about right? Change it, or confirm it.",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 2,
+                      "width": 230,
+                      "height": 40,
+                      "fill": "#000000",
+                      "characters": "Is this about right? Change it, or confirm it.",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.7
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31411",
+                      "name": "Button",
+                      "type": "INSTANCE",
+                      "x": 246,
+                      "y": 0,
+                      "width": 96,
+                      "height": 44,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          0,
+                          0,
+                          0
+                        ],
+                        "itemSpacing": 4,
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": "Button / Type=Secondary",
+                      "componentProperties": {
+                        "Left Icon#309:6": "1:131",
+                        "Right Icon#309:5": "1:129",
+                        "Label#309:8": "Confirm",
+                        "Show Left Icon#309:4": false,
+                        "Show Right Icon#309:7": false,
+                        "Type": "Secondary"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31411;309:3551",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 20.5,
+                          "y": 12,
+                          "width": 55,
+                          "height": 20,
+                          "fill": "#635BE8",
+                          "characters": "Confirm",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold",
+                            "variationSettings": {
+                              "wght": 600
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#635BE8",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31412",
+              "name": "In stock",
+              "type": "FRAME",
+              "x": 0,
+              "y": 2287,
+              "width": 342,
+              "height": 100,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31413",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 100,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Filled",
+                  "componentProperties": {
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Show helper#2073:58": true,
+                    "Helper#2073:57": "How many of this item you have to rent out",
+                    "Label#2073:55": "In stock",
+                    "State": "Filled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31413;2073:14398",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 53,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "In stock",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31413;2073:14399",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31413;2073:14400",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "1",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31413;2073:14401",
+                      "name": "Helper",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 84,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "How many of this item you have to rent out",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31414",
+              "name": "Not delivered switch",
+              "type": "FRAME",
+              "x": 0,
+              "y": 2419,
+              "width": 342,
+              "height": 42,
+              "fill": null,
+              "layout": {
+                "mode": "HORIZONTAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 16,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {
+                  "id": "2168:31415",
+                  "name": "Text",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 275,
+                  "height": 42,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31416",
+                      "name": "This product is not delivered",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 275,
+                      "height": 24,
+                      "fill": "#000000",
+                      "characters": "This product is not delivered",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31417",
+                      "name": "Even if you deliver, this one is for pickup only.",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 26,
+                      "width": 275,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Even if you deliver, this one is for pickup only.",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31418",
+                  "name": "Switch · off",
+                  "type": "FRAME",
+                  "x": 291,
+                  "y": 5.5,
+                  "width": 51,
+                  "height": 31,
+                  "fill": "#E6E6E6",
+                  "children": [
+                    {
+                      "id": "2168:31419",
+                      "name": "Ellipse",
+                      "type": "ELLIPSE",
+                      "x": 2,
+                      "y": 2,
+                      "width": 27,
+                      "height": 27,
+                      "fill": "#FFFFFF"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31420",
+              "name": "Also set for you",
+              "type": "FRAME",
+              "x": 0,
+              "y": 2493,
+              "width": 342,
+              "height": 220,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "padding": [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "itemSpacing": 16,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2168:31421",
+                  "name": "Also set for you",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 20,
+                  "fill": "#000000",
+                  "characters": "Also set for you",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "SemiBold",
+                    "variationSettings": {
+                      "wght": 600
+                    }
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": "#000000",
+                      "opacity": 0.6
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31422",
+                  "name": "Form field",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 36,
+                  "width": 342,
+                  "height": 76,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "mainComponent": "Form field / State=Filled",
+                  "componentProperties": {
+                    "Error#2073:59": "Enter your full name as on your PAN",
+                    "Show helper#2073:58": false,
+                    "Helper#2073:57": "As on your PAN card",
+                    "Label#2073:55": "Deposit",
+                    "State": "Filled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31422;2073:14398",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 54,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Deposit",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2168:31422;2073:14399",
+                      "name": "Input",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 342,
+                      "height": 48,
+                      "fill": "#FFFFFF",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "padding": [
+                          0,
+                          16,
+                          0,
+                          16
+                        ],
+                        "itemSpacing": 0,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "I2168:31422;2073:14400",
+                          "name": "Value",
+                          "type": "TEXT",
+                          "x": 17,
+                          "y": 12,
+                          "width": 308,
+                          "height": 24,
+                          "fill": "#000000",
+                          "characters": "₹120",
+                          "fontSize": 16,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Regular",
+                            "variationSettings": {
+                              "wght": 400
+                            }
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 24
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            {
+                              "type": "SOLID",
+                              "color": "#000000",
+                              "opacity": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31423",
+                  "name": "Info · Availability",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 128,
+                  "width": 342,
+                  "height": 38,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31424",
+                      "name": "Availability",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Availability",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31425",
+                      "name": "Available now · block dates after you submit",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 18,
+                      "width": 342,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Available now · block dates after you submit",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31426",
+                  "name": "Info · Contact",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 182,
+                  "width": 342,
+                  "height": 38,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2168:31427",
+                      "name": "Contact",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 16,
+                      "fill": "#000000",
+                      "characters": "Contact",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 0.6
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2168:31428",
+                      "name": "You · from your profile",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 18,
+                      "width": 342,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "You · from your profile",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular",
+                        "variationSettings": {
+                          "wght": 400
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#000000",
+                          "opacity": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2168:31429",
+          "name": "Scroll end (prototype)",
+          "type": "RECTANGLE",
+          "x": 0,
+          "y": 2838,
+          "width": 390,
+          "height": 1,
+          "fill": null
+        },
+        {
+          "id": "2168:31430",
+          "name": "Status Bar",
+          "type": "FRAME",
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 54,
+          "fill": "#FFFFFF",
+          "children": [
+            {
+              "id": "2168:31431",
+              "name": "Time",
+              "type": "FRAME",
+              "x": 0,
+              "y": 0,
+              "width": 136.95,
+              "height": 54,
+              "fill": null,
+              "children": [
+                {
+                  "id": "2168:31432",
+                  "name": "Time",
+                  "type": "TEXT",
+                  "x": 50.61,
+                  "y": 18.34,
+                  "width": 37,
+                  "height": 22,
+                  "fill": "#000000",
+                  "characters": "9:41",
+                  "fontSize": 17,
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 22
+                  },
+                  "letterSpacing": {
+                    "unit": "PIXELS",
+                    "value": 0
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": "#000000",
+                      "opacity": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2168:31433",
+              "name": "Levels",
+              "type": "FRAME",
+              "x": 248.09,
+              "y": 0,
+              "width": 141.91,
+              "height": 54,
+              "fill": null,
+              "children": [
+                {
+                  "id": "2168:31434",
+                  "name": "Battery",
+                  "type": "GROUP",
+                  "x": 82,
+                  "y": 23,
+                  "width": 27.33,
+                  "height": 13,
+                  "fill": null,
+                  "children": [
+                    {
+                      "id": "2168:31435",
+                      "name": "Border",
+                      "type": "RECTANGLE",
+                      "x": 82,
+                      "y": 23,
+                      "width": 25,
+                      "height": 13,
+                      "fill": null
+                    },
+                    {
+                      "id": "2168:31436",
+                      "name": "Cap",
+                      "type": "VECTOR",
+                      "x": 108,
+                      "y": 27.78,
+                      "width": 1.33,
+                      "height": 4.08,
+                      "fill": "#000000"
+                    },
+                    {
+                      "id": "2168:31437",
+                      "name": "Capacity",
+                      "type": "RECTANGLE",
+                      "x": 84,
+                      "y": 25,
+                      "width": 21,
+                      "height": 9,
+                      "fill": "#000000"
+                    }
+                  ]
+                },
+                {
+                  "id": "2168:31438",
+                  "name": "Wifi",
+                  "type": "VECTOR",
+                  "x": 57.7,
+                  "y": 23.64,
+                  "width": 17.14,
+                  "height": 12.33,
+                  "fill": "#000000"
+                },
+                {
+                  "id": "2168:31439",
+                  "name": "Cellular Connection",
+                  "type": "VECTOR",
+                  "x": 31,
+                  "y": 23.54,
+                  "width": 19.2,
+                  "height": 12.23,
+                  "fill": "#000000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2168:31440",
+          "name": "Top bar",
+          "type": "INSTANCE",
+          "x": 0,
+          "y": 54,
+          "width": 390,
+          "height": 56,
+          "fill": "#FFFFFF",
+          "layout": {
+            "mode": "HORIZONTAL",
+            "padding": [
+              0,
+              16,
+              0,
+              16
+            ],
+            "itemSpacing": 12,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER"
+          },
+          "mainComponent": "Top bar / Type=Back+Title",
+          "componentProperties": {
+            "Show trailing#2071:5": false,
+            "Title#2071:4": "List an item",
+            "Type": "Back+Title"
+          },
+          "children": [
+            {
+              "id": "I2168:31440;2071:14398",
+              "name": "Back",
+              "type": "INSTANCE",
+              "x": 16,
+              "y": 6,
+              "width": 44,
+              "height": 44,
+              "fill": null,
+              "mainComponent": "Icon Button / Type=Regular",
+              "componentProperties": {
+                "Icon#602:12": "1:7",
+                "Type": "Regular"
+              },
+              "children": [
+                {
+                  "id": "I2168:31440;2071:14398;602:8477",
+                  "name": "heroicons-outline/arrow-left",
+                  "type": "INSTANCE",
+                  "x": 10,
+                  "y": 10,
+                  "width": 24,
+                  "height": 24,
+                  "fill": null,
+                  "mainComponent": "heroicons-outline/arrow-left",
+                  "componentProperties": {},
+                  "children": [
+                    {
+                      "id": "I2168:31440;2071:14398;602:8477;341:6186",
+                      "name": "Icon",
+                      "type": "VECTOR",
+                      "x": 3,
+                      "y": 4.5,
+                      "width": 18,
+                      "height": 15,
+                      "fill": null
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "I2168:31440;2071:14402",
+              "name": "Title",
+              "type": "TEXT",
+              "x": 72,
+              "y": 16,
+              "width": 302,
+              "height": 24,
+              "fill": "#000000",
+              "characters": "List an item",
+              "fontSize": 18,
+              "fontName": {
+                "family": "Plus Jakarta Sans",
+                "style": "Bold",
+                "variationSettings": {
+                  "wght": 700
+                }
+              },
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 24
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": "#000000",
+                  "opacity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2168:31441",
+          "name": "Bottom bar",
+          "type": "INSTANCE",
+          "x": 0,
+          "y": 738,
+          "width": 390,
+          "height": 106,
+          "fill": "#FFFFFF",
+          "layout": {
+            "mode": "VERTICAL",
+            "padding": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+          },
+          "mainComponent": "Bottom bar / Layout=Full CTA",
+          "componentProperties": {
+            "Sub-line#2071:14": "Deposit ₹2,000",
+            "Unit#2071:13": "/day",
+            "Show sub-line#2071:15": true,
+            "Value#2071:12": "₹1,200",
+            "Layout": "Full CTA"
+          },
+          "children": [
+            {
+              "id": "I2168:31441;2071:14440",
+              "name": "Content",
+              "type": "FRAME",
+              "x": 0,
+              "y": 1,
+              "width": 390,
+              "height": 84,
+              "fill": null,
+              "layout": {
+                "mode": "HORIZONTAL",
+                "padding": [
+                  16,
+                  24,
+                  16,
+                  24
+                ],
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {
+                  "id": "I2168:31441;2071:14441",
+                  "name": "Primary button",
+                  "type": "INSTANCE",
+                  "x": 24,
+                  "y": 16,
+                  "width": 342,
+                  "height": 52,
+                  "fill": "#CAC8F7",
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "padding": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ],
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "mainComponent": "Button / Type=Disabled",
+                  "componentProperties": {
+                    "Left Icon#309:6": "1:131",
+                    "Right Icon#309:5": "1:129",
+                    "Label#309:8": "Preview listing",
+                    "Show Left Icon#309:4": false,
+                    "Show Right Icon#309:7": false,
+                    "Type": "Disabled"
+                  },
+                  "children": [
+                    {
+                      "id": "I2168:31441;2071:14441;309:3978",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 115,
+                      "y": 14,
+                      "width": 112,
+                      "height": 24,
+                      "fill": "#FFFFFF",
+                      "characters": "Preview listing",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold",
+                        "variationSettings": {
+                          "wght": 600
+                        }
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        {
+                          "type": "SOLID",
+                          "color": "#FFFFFF",
+                          "opacity": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "I2168:31441;2071:14447",
+              "name": "Home Indicator",
+              "type": "FRAME",
+              "x": 0,
+              "y": 85,
+              "width": 390,
+              "height": 21,
+              "fill": null,
+              "children": [
+                {
+                  "id": "I2168:31441;2071:14448",
+                  "name": "Home Indicator",
+                  "type": "RECTANGLE",
+                  "x": 128,
+                  "y": 8,
+                  "width": 134,
+                  "height": 5,
+                  "fill": "#000000"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1160 @@
+{
+ "nodes": [
+  {
+   "id": "2172:31760",
+   "name": "kyc-status · verified (from booking) · validity",
+   "type": "FRAME",
+   "x": 14180,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "fill": "#FFFFFF",
+   "children": [
+    {
+     "id": "2172:31761",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fill": null,
+     "children": [
+      {
+       "id": "2172:31762",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.95,
+       "height": 54,
+       "fill": null,
+       "children": [
+        {
+         "id": "2172:31763",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.61,
+         "y": 18.34,
+         "width": 37,
+         "height": 22,
+         "fill": "#000000",
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "unit": "PIXELS",
+          "value": 22
+         },
+         "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#000000",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "id": "2172:31764",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.09,
+       "y": 0,
+       "width": 141.91,
+       "height": 54,
+       "fill": null,
+       "children": [
+        {
+         "id": "2172:31765",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.33,
+         "height": 13,
+         "fill": null,
+         "children": [
+          {
+           "id": "2172:31766",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "fill": null,
+           "children": []
+          },
+          {
+           "id": "2172:31767",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.78,
+           "width": 1.33,
+           "height": 4.08,
+           "fill": "#000000",
+           "children": []
+          },
+          {
+           "id": "2172:31768",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "fill": "#000000",
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2172:31769",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.7,
+         "y": 23.64,
+         "width": 17.14,
+         "height": 12.33,
+         "fill": "#000000",
+         "children": []
+        },
+        {
+         "id": "2172:31770",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.54,
+         "width": 19.2,
+         "height": 12.23,
+         "fill": "#000000",
+         "children": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2172:31771",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "fill": "#FFFFFF",
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 16,
+      "paddingBottom": 0,
+      "paddingLeft": 16,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER"
+     },
+     "mainComponent": {
+      "name": "Type=Back+Title",
+      "componentSetName": "Top bar"
+     },
+     "componentProperties": {
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": false
+      },
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "ID check"
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Back+Title"
+      }
+     },
+     "children": [
+      {
+       "id": "I2172:31771;2071:14398",
+       "name": "Back",
+       "type": "INSTANCE",
+       "x": 16,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fill": null,
+       "mainComponent": {
+        "name": "Type=Regular",
+        "componentSetName": "Icon Button"
+       },
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:7"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "children": [
+        {
+         "id": "I2172:31771;2071:14398;602:8477",
+         "name": "heroicons-outline/arrow-left",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fill": null,
+         "mainComponent": {
+          "name": "heroicons-outline/arrow-left",
+          "componentSetName": null
+         },
+         "componentProperties": {},
+         "children": [
+          {
+           "id": "I2172:31771;2071:14398;602:8477;341:6186",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3,
+           "y": 4.5,
+           "width": 18,
+           "height": 15,
+           "fill": null,
+           "children": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "I2172:31771;2071:14402",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 72,
+       "y": 16,
+       "width": 302,
+       "height": 24,
+       "fill": "#000000",
+       "characters": "ID check",
+       "fontSize": 18,
+       "fontName": {
+        "family": "Plus Jakarta Sans",
+        "style": "Bold"
+       },
+       "lineHeight": {
+        "unit": "PIXELS",
+        "value": 24
+       },
+       "letterSpacing": {
+        "unit": "PERCENT",
+        "value": 0
+       },
+       "fills": [
+        {
+         "type": "SOLID",
+         "color": "#000000",
+         "opacity": 1
+        }
+       ],
+       "children": []
+      }
+     ]
+    },
+    {
+     "id": "2172:31772",
+     "name": "Body (scroll)",
+     "type": "FRAME",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 492,
+     "fill": null,
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 16,
+      "paddingRight": 0,
+      "paddingBottom": 24,
+      "paddingLeft": 0,
+      "itemSpacing": 24,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER"
+     },
+     "children": [
+      {
+       "id": "2172:31773",
+       "name": "Status",
+       "type": "FRAME",
+       "x": 24,
+       "y": 16,
+       "width": 342,
+       "height": 168,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 16,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2172:31774",
+         "name": "KycChip",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 56,
+         "height": 56,
+         "fill": "#EDEDFC",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "children": [
+          {
+           "id": "2172:31775",
+           "name": "heroicons-solid/shield-check",
+           "type": "FRAME",
+           "x": 14,
+           "y": 14,
+           "width": 28,
+           "height": 28,
+           "fill": null,
+           "children": [
+            {
+             "id": "2172:31776",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.62,
+             "y": 2.29,
+             "width": 22.75,
+             "height": 23.52,
+             "fill": "#635BE8",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2172:31777",
+         "name": "Text",
+         "type": "FRAME",
+         "x": 0,
+         "y": 72,
+         "width": 342,
+         "height": 96,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 8,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2172:31778",
+           "name": "Your ID check passed",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 342,
+           "height": 28,
+           "fill": "#000000",
+           "characters": "Your ID check passed",
+           "fontSize": 20,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "Bold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 28
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 1
+            }
+           ],
+           "children": []
+          },
+          {
+           "id": "2172:31779",
+           "name": "You can now book items that need an ID c",
+           "type": "TEXT",
+           "x": 0,
+           "y": 36,
+           "width": 342,
+           "height": 60,
+           "fill": "#000000",
+           "characters": "You can now book items that need an ID check. Need to change your PAN? Use \"Remove my verification data\" below, then check again.",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "Regular"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.7
+            }
+           ],
+           "children": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2172:31787",
+       "name": "NEW · Validity",
+       "type": "FRAME",
+       "x": 24,
+       "y": 208,
+       "width": 342,
+       "height": 136,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2172:31791",
+         "name": "NEW · Verified on 9 Nov 2025",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 342,
+         "height": 20,
+         "fill": "#000000",
+         "characters": "Verified on 9 Nov 2025",
+         "fontSize": 14,
+         "fontName": {
+          "family": "Plus Jakarta Sans",
+          "style": "Regular"
+         },
+         "lineHeight": {
+          "unit": "PIXELS",
+          "value": 20
+         },
+         "letterSpacing": {
+          "unit": "PERCENT",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#000000",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        },
+        {
+         "id": "2172:31792",
+         "name": "NEW · Valid until 9 Nov 2026",
+         "type": "TEXT",
+         "x": 0,
+         "y": 24,
+         "width": 342,
+         "height": 20,
+         "fill": "#000000",
+         "characters": "Valid until 9 Nov 2026",
+         "fontSize": 14,
+         "fontName": {
+          "family": "Plus Jakarta Sans",
+          "style": "Regular"
+         },
+         "lineHeight": {
+          "unit": "PIXELS",
+          "value": 20
+         },
+         "letterSpacing": {
+          "unit": "PERCENT",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#000000",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        },
+        {
+         "id": "2172:31793",
+         "name": "NEW · Check · PAN",
+         "type": "FRAME",
+         "x": 0,
+         "y": 48,
+         "width": 342,
+         "height": 20,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 6,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "children": [
+          {
+           "id": "2172:31794",
+           "name": "NEW · check-circle 16",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 2,
+           "width": 16,
+           "height": 16,
+           "fill": null,
+           "mainComponent": {
+            "name": "NEW · heroicons-outline/check-circle (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2172:31794;2171:31702",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2,
+             "y": 2,
+             "width": 12,
+             "height": 12,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "2172:31796",
+           "name": "NEW · PAN",
+           "type": "TEXT",
+           "x": 22,
+           "y": 0,
+           "width": 320,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "PAN",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "Regular"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.7
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2172:31797",
+         "name": "NEW · Check · Aadhaar, through DigiLocker",
+         "type": "FRAME",
+         "x": 0,
+         "y": 72,
+         "width": 342,
+         "height": 20,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 6,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "children": [
+          {
+           "id": "2172:31798",
+           "name": "NEW · check-circle 16",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 2,
+           "width": 16,
+           "height": 16,
+           "fill": null,
+           "mainComponent": {
+            "name": "NEW · heroicons-outline/check-circle (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2172:31798;2171:31702",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2,
+             "y": 2,
+             "width": 12,
+             "height": 12,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "2172:31800",
+           "name": "NEW · Aadhaar, through DigiLocker",
+           "type": "TEXT",
+           "x": 22,
+           "y": 0,
+           "width": 320,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "Aadhaar, through DigiLocker",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "Regular"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.7
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2172:31801",
+         "name": "NEW · Expiry warning",
+         "type": "TEXT",
+         "x": 0,
+         "y": 96,
+         "width": 342,
+         "height": 40,
+         "fill": "#B54708",
+         "characters": "Expires in 12 days. Re-verify now; your current check stays valid until the new one is decided.",
+         "fontSize": 14,
+         "fontName": {
+          "family": "Plus Jakarta Sans",
+          "style": "Regular"
+         },
+         "lineHeight": {
+          "unit": "PIXELS",
+          "value": 20
+         },
+         "letterSpacing": {
+          "unit": "PERCENT",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#B54708",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "id": "2172:31802",
+       "name": "NEW · Re-verify (Primary)",
+       "type": "INSTANCE",
+       "x": 24,
+       "y": 368,
+       "width": 342,
+       "height": 56,
+       "fill": "#635BE8",
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "CENTER"
+       },
+       "mainComponent": {
+        "name": "Type=Primary",
+        "componentSetName": "Button"
+       },
+       "componentProperties": {
+        "Left Icon#309:6": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:131"
+        },
+        "Right Icon#309:5": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:129"
+        },
+        "Label#309:8": {
+         "type": "TEXT",
+         "value": "Re-verify"
+        },
+        "Show Left Icon#309:4": {
+         "type": "BOOLEAN",
+         "value": false
+        },
+        "Show Right Icon#309:7": {
+         "type": "BOOLEAN",
+         "value": false
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Primary"
+        }
+       },
+       "children": [
+        {
+         "id": "I2172:31802;309:676",
+         "name": "Label",
+         "type": "TEXT",
+         "x": 138.5,
+         "y": 17.5,
+         "width": 65,
+         "height": 21,
+         "fill": "#FFFFFF",
+         "characters": "Re-verify",
+         "fontSize": 14,
+         "fontName": {
+          "family": "Plus Jakarta Sans",
+          "style": "Bold"
+         },
+         "lineHeight": {
+          "unit": "PERCENT",
+          "value": 150
+         },
+         "letterSpacing": {
+          "unit": "PERCENT",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#FFFFFF",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "id": "2172:31780",
+       "name": "Remove my verification data",
+       "type": "INSTANCE",
+       "x": 24,
+       "y": 448,
+       "width": 342,
+       "height": 20,
+       "fill": null,
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER"
+       },
+       "mainComponent": {
+        "name": "Type=Text",
+        "componentSetName": "Button"
+       },
+       "componentProperties": {
+        "Left Icon#309:6": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:131"
+        },
+        "Right Icon#309:5": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:129"
+        },
+        "Label#309:8": {
+         "type": "TEXT",
+         "value": "Remove my verification data"
+        },
+        "Show Left Icon#309:4": {
+         "type": "BOOLEAN",
+         "value": false
+        },
+        "Show Right Icon#309:7": {
+         "type": "BOOLEAN",
+         "value": false
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Text"
+        }
+       },
+       "children": [
+        {
+         "id": "I2172:31780;331:5411",
+         "name": "Label",
+         "type": "TEXT",
+         "x": 0,
+         "y": 0,
+         "width": 191,
+         "height": 20,
+         "fill": "#D92D20",
+         "characters": "Remove my verification data",
+         "fontSize": 14,
+         "fontName": {
+          "family": "Plus Jakarta Sans",
+          "style": "SemiBold"
+         },
+         "lineHeight": {
+          "unit": "PIXELS",
+          "value": 20
+         },
+         "letterSpacing": {
+          "unit": "PERCENT",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#D92D20",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2172:31781",
+     "name": "Bottom bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 702,
+     "width": 390,
+     "height": 142,
+     "fill": "#FFFFFF",
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN"
+     },
+     "mainComponent": {
+      "name": "Layout=CTA+Text",
+      "componentSetName": "Bottom bar"
+     },
+     "componentProperties": {
+      "Sub-line#2071:14": {
+       "type": "TEXT",
+       "value": "Deposit ₹2,000"
+      },
+      "Unit#2071:13": {
+       "type": "TEXT",
+       "value": "/day"
+      },
+      "Show sub-line#2071:15": {
+       "type": "BOOLEAN",
+       "value": true
+      },
+      "Value#2071:12": {
+       "type": "TEXT",
+       "value": "₹1,200"
+      },
+      "Layout": {
+       "type": "VARIANT",
+       "value": "CTA+Text"
+      }
+     },
+     "children": [
+      {
+       "id": "I2172:31781;2109:30150",
+       "name": "Content",
+       "type": "FRAME",
+       "x": 0,
+       "y": 1,
+       "width": 390,
+       "height": 120,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 4,
+        "paddingLeft": 24,
+        "itemSpacing": 4,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER"
+       },
+       "children": [
+        {
+         "id": "I2172:31781;2109:30151",
+         "name": "Primary button (NEW · now Secondary/outline)",
+         "type": "INSTANCE",
+         "x": 24,
+         "y": 16,
+         "width": 342,
+         "height": 52,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Type=Secondary",
+          "componentSetName": "Button"
+         },
+         "componentProperties": {
+          "Left Icon#309:6": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:131"
+          },
+          "Right Icon#309:5": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:129"
+          },
+          "Label#309:8": {
+           "type": "TEXT",
+           "value": "Back to your booking"
+          },
+          "Show Left Icon#309:4": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show Right Icon#309:7": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Secondary"
+          }
+         },
+         "children": [
+          {
+           "id": "I2172:31781;2109:30151;309:3551",
+           "name": "Label",
+           "type": "TEXT",
+           "x": 89,
+           "y": 14,
+           "width": 164,
+           "height": 24,
+           "fill": "#000000",
+           "characters": "Back to your booking",
+           "fontSize": 16,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 24
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 1
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "I2172:31781;2109:30154",
+         "name": "Tertiary link",
+         "type": "INSTANCE",
+         "x": 97.5,
+         "y": 72,
+         "width": 195,
+         "height": 44,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Type=Text",
+          "componentSetName": "Button"
+         },
+         "componentProperties": {
+          "Left Icon#309:6": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:131"
+          },
+          "Right Icon#309:5": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:129"
+          },
+          "Label#309:8": {
+           "type": "TEXT",
+           "value": "Questions? Contact support"
+          },
+          "Show Left Icon#309:4": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show Right Icon#309:7": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Type": {
+           "type": "VARIANT",
+           "value": "Text"
+          }
+         },
+         "children": [
+          {
+           "id": "I2172:31781;2109:30154;331:5411",
+           "name": "Label",
+           "type": "TEXT",
+           "x": 0,
+           "y": 11.5,
+           "width": 195,
+           "height": 21,
+           "fill": "#635BE8",
+           "characters": "Questions? Contact support",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "Bold"
+           },
+           "lineHeight": {
+            "unit": "PERCENT",
+            "value": 150
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#635BE8",
+             "opacity": 1
+            }
+           ],
+           "children": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "I2172:31781;2109:30152",
+       "name": "Home Indicator",
+       "type": "FRAME",
+       "x": 0,
+       "y": 121,
+       "width": 390,
+       "height": 21,
+       "fill": null,
+       "children": [
+        {
+         "id": "I2172:31781;2109:30153",
+         "name": "Home Indicator",
+         "type": "RECTANGLE",
+         "x": 128,
+         "y": 8,
+         "width": 134,
+         "height": 5,
+         "fill": "#000000",
+         "children": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

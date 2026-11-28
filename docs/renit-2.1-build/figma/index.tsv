@@ -415,3 +415,23 @@ frameId	section	frameName	inventoryId	route	state	check
 2097:32751	14	request-form · empty (Submit disabled)	request-form	unavailabilityFormInputs {category, subcategory}	empty (Submit disabled)	live
 2097:32832	14	request-date-picker · range picked	request-date-picker	unavailabilityFormInputs > DateRangePicker	range picked	live
 2097:33083	14	request-form · filled (full scroll)	request-form	unavailabilityFormInputs {category, subcategory}	filled (full scroll)	live
+2171:30925	07	return-window · slot picked · return now	return-window	BookingReturnWindow {number}	return now	fixture
+2171:31003	07	return-window · slot picked · waiting for the shop	return-window	BookingReturnWindow {number}	waiting for the shop	fixture
+2171:31090	07	booking-return · courier, pick a window · asked early	booking-return	BookingReturn {number}	asked early	fixture
+2171:31194	07	booking-return · courier, pick a window · early declined	booking-return	BookingReturn {number}	early declined	fixture
+2171:31232	08	shop-booking · out (rental running) · early return asked	shop-booking	ShopBooking	early return asked	fixture
+2171:31305	09	shop-return-courier · item arriving, with the rider (full scroll) · early return asked	shop-return-courier	ShopReturn (courier)	early return asked	fixture
+2171:31778	13	profile-signed-in · customer · KYC	profile-signed-in	MainTabs > Profile (tab)	customer · KYC	fixture
+2171:31861	13	profile-signed-in · customer (full scroll) · KYC	profile-signed-in	MainTabs > Profile (tab)	customer (full scroll) · KYC	fixture
+2171:31941	13	profile-signed-in · shop, pending approval · KYC	profile-signed-in	MainTabs > Profile (tab)	shop, pending approval · KYC	fixture
+2172:31760	05	kyc-status · verified (from booking) · validity	kyc-status	KycStatus {justReturned?, source?: 'booking'}	verified (from booking) · validity	fixture
+2168:30597	07	capture · intro (return) · no video	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	intro (return) · no video	fixture
+2168:30679	09	capture-owner · intro, customer's phone can't record (full scroll) · no video	capture-owner	Capture	intro, customer's phone can't record (full scroll) · no video	fixture
+2168:30764	07	capture · uploading · no video	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	uploading · no video	fixture
+2168:30795	07	capture · the shop's set, code (phone fallback) · no video	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	the shop's set, code (phone fallback) · no video	fixture
+2168:30842	07	capture · what's included (courier return, seal) · no video	capture	Capture {number, moment: handover|return, role, forOther?, courier?, items?, tit	what's included (courier return, seal) · no video	fixture
+2168:30910	09	capture-owner · what's included, ID check (handover) (full scroll) · used up	capture-owner	Capture	what's included, ID check (handover) (full scroll) · used up	fixture
+2168:31080	10	list-review · what comes with it	list-review	ListReview	what comes with it	fixture
+2168:31313	10	list-review · what comes with it, list error	list-review	ListReview	what comes with it, list error	fixture
+2168:31492	11	edit-product · what comes with it	edit-product	editProduct	what comes with it	fixture
+2168:31577	11	edit-included-items · default (full scroll)	edit-included-items	EditIncludedItems	default (full scroll)	fixture

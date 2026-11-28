@@ -353,7 +353,7 @@
              "layoutSizingHorizontal": "FILL",
              "layoutSizingVertical": "HUG",
              "layoutAlign": "STRETCH",
-             "characters": "The same photos and video as at the handover",
+             "characters": "The same record as at the handover",
              "textAutoResize": "HEIGHT",
              "boundVariables": {
               "fills": [
