@@ -2981,7 +2981,7 @@
         },
         {
          "id": "2094:23583",
-         "name": "You are paid once your photos and video …",
+         "name": "You are paid once your handover record has uploaded.",
          "type": "TEXT",
          "x": 16,
          "y": 96,
@@ -2990,7 +2990,7 @@
          "layoutSizingHorizontal": "FILL",
          "layoutSizingVertical": "HUG",
          "layoutAlign": "STRETCH",
-         "characters": "You are paid once your photos and video of the handover have uploaded.",
+         "characters": "You are paid once your handover record has uploaded.",
          "textAutoResize": "HEIGHT",
          "boundVariables": {
           "fills": [

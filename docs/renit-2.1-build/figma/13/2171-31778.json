@@ -1,0 +1,4881 @@
+{
+ "nodes": [
+  {
+   "id": "2171:31778",
+   "name": "profile-signed-in · customer · KYC",
+   "type": "FRAME",
+   "x": 14180,
+   "y": 120,
+   "width": 390,
+   "height": 844,
+   "fill": "#FFFFFF",
+   "children": [
+    {
+     "id": "2171:31779",
+     "name": "Status Bar",
+     "type": "FRAME",
+     "x": 0,
+     "y": 0,
+     "width": 390,
+     "height": 54,
+     "fill": null,
+     "children": [
+      {
+       "id": "2171:31780",
+       "name": "Time",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 136.95,
+       "height": 54,
+       "fill": null,
+       "children": [
+        {
+         "id": "2171:31781",
+         "name": "Time",
+         "type": "TEXT",
+         "x": 50.61,
+         "y": 18.34,
+         "width": 37,
+         "height": 22,
+         "fill": "#000000",
+         "characters": "9:41",
+         "fontSize": 17,
+         "fontName": "mixed",
+         "lineHeight": {
+          "unit": "PIXELS",
+          "value": 22
+         },
+         "letterSpacing": {
+          "unit": "PIXELS",
+          "value": 0
+         },
+         "fills": [
+          {
+           "type": "SOLID",
+           "color": "#000000",
+           "opacity": 1
+          }
+         ],
+         "children": []
+        }
+       ]
+      },
+      {
+       "id": "2171:31782",
+       "name": "Levels",
+       "type": "FRAME",
+       "x": 248.09,
+       "y": 0,
+       "width": 141.91,
+       "height": 54,
+       "fill": null,
+       "children": [
+        {
+         "id": "2171:31783",
+         "name": "Battery",
+         "type": "GROUP",
+         "x": 82,
+         "y": 23,
+         "width": 27.33,
+         "height": 13,
+         "fill": null,
+         "children": [
+          {
+           "id": "2171:31784",
+           "name": "Border",
+           "type": "RECTANGLE",
+           "x": 82,
+           "y": 23,
+           "width": 25,
+           "height": 13,
+           "fill": null,
+           "children": []
+          },
+          {
+           "id": "2171:31785",
+           "name": "Cap",
+           "type": "VECTOR",
+           "x": 108,
+           "y": 27.78,
+           "width": 1.33,
+           "height": 4.08,
+           "fill": "#000000",
+           "children": []
+          },
+          {
+           "id": "2171:31786",
+           "name": "Capacity",
+           "type": "RECTANGLE",
+           "x": 84,
+           "y": 25,
+           "width": 21,
+           "height": 9,
+           "fill": "#000000",
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31787",
+         "name": "Wifi",
+         "type": "VECTOR",
+         "x": 57.7,
+         "y": 23.64,
+         "width": 17.14,
+         "height": 12.33,
+         "fill": "#000000",
+         "children": []
+        },
+        {
+         "id": "2171:31788",
+         "name": "Cellular Connection",
+         "type": "VECTOR",
+         "x": 31,
+         "y": 23.54,
+         "width": 19.2,
+         "height": 12.23,
+         "fill": "#000000",
+         "children": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2171:31789",
+     "name": "Top bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 54,
+     "width": 390,
+     "height": 56,
+     "fill": "#FFFFFF",
+     "layout": {
+      "mode": "HORIZONTAL",
+      "paddingTop": 0,
+      "paddingRight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 24,
+      "itemSpacing": 12,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "CENTER"
+     },
+     "mainComponent": {
+      "name": "Type=Tab title",
+      "componentSetName": "Top bar"
+     },
+     "componentProperties": {
+      "Title#2071:4": {
+       "type": "TEXT",
+       "value": "Booking details"
+      },
+      "Show trailing#2071:5": {
+       "type": "BOOLEAN",
+       "value": true
+      },
+      "Type": {
+       "type": "VARIANT",
+       "value": "Tab title"
+      }
+     },
+     "children": [
+      {
+       "id": "I2171:31789;2071:14408",
+       "name": "Title",
+       "type": "TEXT",
+       "x": 24,
+       "y": 14,
+       "width": 286,
+       "height": 28,
+       "fill": "#000000",
+       "characters": "Profile",
+       "fontSize": 20,
+       "fontName": {
+        "family": "Plus Jakarta Sans",
+        "style": "Bold"
+       },
+       "lineHeight": {
+        "unit": "PIXELS",
+        "value": 28
+       },
+       "letterSpacing": {
+        "unit": "PERCENT",
+        "value": 0
+       },
+       "fills": [
+        {
+         "type": "SOLID",
+         "color": "#000000",
+         "opacity": 1
+        }
+       ],
+       "children": []
+      },
+      {
+       "id": "I2171:31789;2071:14409",
+       "name": "Trailing",
+       "type": "INSTANCE",
+       "x": 322,
+       "y": 6,
+       "width": 44,
+       "height": 44,
+       "fill": null,
+       "mainComponent": {
+        "name": "Type=Regular",
+        "componentSetName": "Icon Button"
+       },
+       "componentProperties": {
+        "Icon#602:12": {
+         "type": "INSTANCE_SWAP",
+         "value": "1:3309"
+        },
+        "Type": {
+         "type": "VARIANT",
+         "value": "Regular"
+        }
+       },
+       "children": [
+        {
+         "id": "I2171:31789;2071:14409;602:8477",
+         "name": "heroicons-outline/bell",
+         "type": "INSTANCE",
+         "x": 10,
+         "y": 10,
+         "width": 24,
+         "height": 24,
+         "fill": null,
+         "mainComponent": {
+          "name": "heroicons-outline/bell",
+          "componentSetName": null
+         },
+         "componentProperties": {},
+         "children": [
+          {
+           "id": "I2171:31789;2071:14409;602:8477;341:6649",
+           "name": "Icon",
+           "type": "VECTOR",
+           "x": 3.69,
+           "y": 3,
+           "width": 16.62,
+           "height": 18,
+           "fill": null,
+           "children": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2171:31790",
+     "name": "Body",
+     "type": "FRAME",
+     "x": 0,
+     "y": 110,
+     "width": 390,
+     "height": 1447,
+     "fill": null,
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 24,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN"
+     },
+     "children": [
+      {
+       "id": "2171:31791",
+       "name": "Account block",
+       "type": "FRAME",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 104,
+       "fill": null,
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 16,
+        "paddingRight": 24,
+        "paddingBottom": 16,
+        "paddingLeft": 24,
+        "itemSpacing": 12,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "CENTER"
+       },
+       "children": [
+        {
+         "id": "2171:31792",
+         "name": "Avatar",
+         "type": "FRAME",
+         "x": 24,
+         "y": 28,
+         "width": 48,
+         "height": 48,
+         "fill": "#EDEDFC",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "children": [
+          {
+           "id": "2171:31793",
+           "name": "RS",
+           "type": "TEXT",
+           "x": 13.5,
+           "y": 12,
+           "width": 21,
+           "height": 24,
+           "fill": "#635BE8",
+           "characters": "RS",
+           "fontSize": 16,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 24
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#635BE8",
+             "opacity": 1
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31794",
+         "name": "Name and email",
+         "type": "FRAME",
+         "x": 84,
+         "y": 16,
+         "width": 246,
+         "height": 72,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 2,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31795",
+           "name": "Riya Sharma",
+           "type": "TEXT",
+           "x": 0,
+           "y": 0,
+           "width": 246,
+           "height": 24,
+           "fill": "#000000",
+           "characters": "Riya Sharma",
+           "fontSize": 16,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 24
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 1
+            }
+           ],
+           "children": []
+          },
+          {
+           "id": "2171:31796",
+           "name": "riya.sharma@gmail.com",
+           "type": "TEXT",
+           "x": 0,
+           "y": 26,
+           "width": 246,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "riya.sharma@gmail.com",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "Regular"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.7
+            }
+           ],
+           "children": []
+          },
+          {
+           "id": "2171:31839",
+           "name": "NEW · KYC verified badge (Status pill · Tone=Success + shield-check)",
+           "type": "FRAME",
+           "x": 0,
+           "y": 48,
+           "width": 109,
+           "height": 24,
+           "fill": "#ECFDF3",
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 10,
+            "paddingBottom": 0,
+            "paddingLeft": 10,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER"
+           },
+           "children": [
+            {
+             "id": "2171:31841",
+             "name": "NEW · heroicons-solid/shield-check 14",
+             "type": "INSTANCE",
+             "x": 10,
+             "y": 5,
+             "width": 14,
+             "height": 14,
+             "fill": null,
+             "mainComponent": {
+              "name": "heroicons-solid/shield-check (local)",
+              "componentSetName": null
+             },
+             "componentProperties": {},
+             "children": [
+              {
+               "id": "I2171:31841;2093:22081",
+               "name": "Vector",
+               "type": "VECTOR",
+               "x": 1.31,
+               "y": 1.15,
+               "width": 11.38,
+               "height": 11.76,
+               "fill": "#067647",
+               "children": []
+              }
+             ]
+            },
+            {
+             "id": "2171:31840",
+             "name": "KYC verified",
+             "type": "TEXT",
+             "x": 28,
+             "y": 4,
+             "width": 71,
+             "height": 16,
+             "fill": "#067647",
+             "characters": "KYC verified",
+             "fontSize": 12,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "SemiBold"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#067647",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31797",
+         "name": "Edit your details (opens Personal details)",
+         "type": "INSTANCE",
+         "x": 342,
+         "y": 40,
+         "width": 24,
+         "height": 24,
+         "fill": null,
+         "mainComponent": {
+          "name": "heroicons-outline/pencil-square (local)",
+          "componentSetName": null
+         },
+         "componentProperties": {},
+         "children": [
+          {
+           "id": "I2171:31797;2093:22052",
+           "name": "Vector",
+           "type": "VECTOR",
+           "x": 3,
+           "y": 2.25,
+           "width": 18.75,
+           "height": 18.75,
+           "fill": null,
+           "children": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2171:31843",
+       "name": "NEW · Section · KYC",
+       "type": "FRAME",
+       "x": 0,
+       "y": 104,
+       "width": 390,
+       "height": 234,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2171:31845",
+         "name": "NEW · Group header · KYC",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 32,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 4,
+          "paddingRight": 24,
+          "paddingBottom": 8,
+          "paddingLeft": 24,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31846",
+           "name": "KYC",
+           "type": "TEXT",
+           "x": 24,
+           "y": 4,
+           "width": 29,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "KYC",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.6
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31847",
+         "name": "NEW · KYC card (margins 0 24 16)",
+         "type": "FRAME",
+         "x": 0,
+         "y": 32,
+         "width": 390,
+         "height": 202,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 16,
+          "paddingLeft": 24,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31848",
+           "name": "NEW · KYC card (verified, with dates)",
+           "type": "FRAME",
+           "x": 24,
+           "y": 0,
+           "width": 342,
+           "height": 186,
+           "fill": "#FFFFFF",
+           "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 16,
+            "paddingRight": 16,
+            "paddingBottom": 16,
+            "paddingLeft": 16,
+            "itemSpacing": 12,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "2171:31849",
+             "name": "KycChip",
+             "type": "FRAME",
+             "x": 17,
+             "y": 17,
+             "width": 40,
+             "height": 40,
+             "fill": "#EDEDFC",
+             "layout": {
+              "mode": "HORIZONTAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 0,
+              "primaryAxisAlignItems": "CENTER",
+              "counterAxisAlignItems": "CENTER"
+             },
+             "children": [
+              {
+               "id": "2171:31850",
+               "name": "heroicons-solid/shield-check (local)",
+               "type": "INSTANCE",
+               "x": 10,
+               "y": 10,
+               "width": 20,
+               "height": 20,
+               "fill": null,
+               "mainComponent": {
+                "name": "heroicons-solid/shield-check (local)",
+                "componentSetName": null
+               },
+               "componentProperties": {},
+               "children": [
+                {
+                 "id": "I2171:31850;2093:22081",
+                 "name": "Vector",
+                 "type": "VECTOR",
+                 "x": 1.87,
+                 "y": 1.64,
+                 "width": 16.25,
+                 "height": 16.8,
+                 "fill": "#635BE8",
+                 "children": []
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "2171:31851",
+             "name": "Text",
+             "type": "FRAME",
+             "x": 69,
+             "y": 17,
+             "width": 256,
+             "height": 152,
+             "fill": null,
+             "layout": {
+              "mode": "VERTICAL",
+              "paddingTop": 0,
+              "paddingRight": 0,
+              "paddingBottom": 0,
+              "paddingLeft": 0,
+              "itemSpacing": 2,
+              "primaryAxisAlignItems": "MIN",
+              "counterAxisAlignItems": "MIN"
+             },
+             "children": [
+              {
+               "id": "2171:31852",
+               "name": "KYC verified",
+               "type": "TEXT",
+               "x": 0,
+               "y": 0,
+               "width": 256,
+               "height": 24,
+               "fill": "#000000",
+               "characters": "KYC verified",
+               "fontSize": 16,
+               "fontName": {
+                "family": "Plus Jakarta Sans",
+                "style": "SemiBold"
+               },
+               "lineHeight": {
+                "unit": "PIXELS",
+                "value": 24
+               },
+               "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+               },
+               "fills": [
+                {
+                 "type": "SOLID",
+                 "color": "#000000",
+                 "opacity": 1
+                }
+               ],
+               "children": []
+              },
+              {
+               "id": "2171:31853",
+               "name": "You can book items that need an ID check.",
+               "type": "TEXT",
+               "x": 0,
+               "y": 26,
+               "width": 256,
+               "height": 40,
+               "fill": "#000000",
+               "characters": "You can book items that need an ID check.",
+               "fontSize": 14,
+               "fontName": {
+                "family": "Plus Jakarta Sans",
+                "style": "Regular"
+               },
+               "lineHeight": {
+                "unit": "PIXELS",
+                "value": 20
+               },
+               "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+               },
+               "fills": [
+                {
+                 "type": "SOLID",
+                 "color": "#000000",
+                 "opacity": 0.7
+                }
+               ],
+               "children": []
+              },
+              {
+               "id": "2171:31854",
+               "name": "NEW · Dates",
+               "type": "TEXT",
+               "x": 0,
+               "y": 68,
+               "width": 256,
+               "height": 40,
+               "fill": "#000000",
+               "characters": "Verified on 12 Oct 2026 · Valid until 12 Oct 2027",
+               "fontSize": 14,
+               "fontName": {
+                "family": "Plus Jakarta Sans",
+                "style": "Regular"
+               },
+               "lineHeight": {
+                "unit": "PIXELS",
+                "value": 20
+               },
+               "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+               },
+               "fills": [
+                {
+                 "type": "SOLID",
+                 "color": "#000000",
+                 "opacity": 0.6
+                }
+               ],
+               "children": []
+              },
+              {
+               "id": "2171:31855",
+               "name": "NEW · Check · PAN",
+               "type": "FRAME",
+               "x": 0,
+               "y": 110,
+               "width": 256,
+               "height": 20,
+               "fill": null,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 6,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+               },
+               "children": [
+                {
+                 "id": "2171:31856",
+                 "name": "NEW · check-circle 16",
+                 "type": "INSTANCE",
+                 "x": 0,
+                 "y": 2,
+                 "width": 16,
+                 "height": 16,
+                 "fill": null,
+                 "mainComponent": {
+                  "name": "NEW · heroicons-outline/check-circle (local)",
+                  "componentSetName": null
+                 },
+                 "componentProperties": {},
+                 "children": [
+                  {
+                   "id": "I2171:31856;2171:31702",
+                   "name": "Vector",
+                   "type": "VECTOR",
+                   "x": 2,
+                   "y": 2,
+                   "width": 12,
+                   "height": 12,
+                   "fill": null,
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "id": "2171:31857",
+                 "name": "NEW · PAN",
+                 "type": "TEXT",
+                 "x": 22,
+                 "y": 0,
+                 "width": 234,
+                 "height": 20,
+                 "fill": "#000000",
+                 "characters": "PAN",
+                 "fontSize": 14,
+                 "fontName": {
+                  "family": "Plus Jakarta Sans",
+                  "style": "Regular"
+                 },
+                 "lineHeight": {
+                  "unit": "PIXELS",
+                  "value": 20
+                 },
+                 "letterSpacing": {
+                  "unit": "PERCENT",
+                  "value": 0
+                 },
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#000000",
+                   "opacity": 0.7
+                  }
+                 ],
+                 "children": []
+                }
+               ]
+              },
+              {
+               "id": "2171:31858",
+               "name": "NEW · Check · Aadhaar, through DigiLocker",
+               "type": "FRAME",
+               "x": 0,
+               "y": 132,
+               "width": 256,
+               "height": 20,
+               "fill": null,
+               "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 6,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+               },
+               "children": [
+                {
+                 "id": "2171:31859",
+                 "name": "NEW · check-circle 16",
+                 "type": "INSTANCE",
+                 "x": 0,
+                 "y": 2,
+                 "width": 16,
+                 "height": 16,
+                 "fill": null,
+                 "mainComponent": {
+                  "name": "NEW · heroicons-outline/check-circle (local)",
+                  "componentSetName": null
+                 },
+                 "componentProperties": {},
+                 "children": [
+                  {
+                   "id": "I2171:31859;2171:31702",
+                   "name": "Vector",
+                   "type": "VECTOR",
+                   "x": 2,
+                   "y": 2,
+                   "width": 12,
+                   "height": 12,
+                   "fill": null,
+                   "children": []
+                  }
+                 ]
+                },
+                {
+                 "id": "2171:31860",
+                 "name": "NEW · Aadhaar, through DigiLocker",
+                 "type": "TEXT",
+                 "x": 22,
+                 "y": 0,
+                 "width": 234,
+                 "height": 20,
+                 "fill": "#000000",
+                 "characters": "Aadhaar, through DigiLocker",
+                 "fontSize": 14,
+                 "fontName": {
+                  "family": "Plus Jakarta Sans",
+                  "style": "Regular"
+                 },
+                 "lineHeight": {
+                  "unit": "PIXELS",
+                  "value": 20
+                 },
+                 "letterSpacing": {
+                  "unit": "PERCENT",
+                  "value": 0
+                 },
+                 "fills": [
+                  {
+                   "type": "SOLID",
+                   "color": "#000000",
+                   "opacity": 0.7
+                  }
+                 ],
+                 "children": []
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2171:31798",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 338,
+       "width": 390,
+       "height": 1,
+       "fill": "#E6E6E6",
+       "children": []
+      },
+      {
+       "id": "2171:31799",
+       "name": "Section · Account",
+       "type": "FRAME",
+       "x": 0,
+       "y": 339,
+       "width": 390,
+       "height": 380,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2171:31800",
+         "name": "Group header",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 44,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 20,
+          "paddingRight": 24,
+          "paddingBottom": 4,
+          "paddingLeft": 24,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31801",
+           "name": "Account",
+           "type": "TEXT",
+           "x": 24,
+           "y": 20,
+           "width": 58,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "Account",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.6
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31802",
+         "name": "Today and bookings",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 44,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22020"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Today and bookings"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31802;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/calendar-days (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31802;2073:14348;2093:22019",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 3,
+             "width": 18,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31802;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31802;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Today and bookings",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31802;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31802;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31803",
+         "name": "My products",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 100,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:3311"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "My products"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31803;2073:14348",
+           "name": "heroicons-outline/cube",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/cube",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31803;2073:14348;341:7247",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 2.25,
+             "width": 18,
+             "height": 19.5,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31803;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31803;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "My products",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31803;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31803;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31804",
+         "name": "Rental settings",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 156,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22023"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Rental settings"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31804;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/adjustments-horizontal (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31804;2073:14348;2093:22022",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 3.75,
+             "y": 4.5,
+             "width": 16.5,
+             "height": 15,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31804;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31804;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Rental settings",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31804;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31804;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31805",
+         "name": "Bank account",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 212,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22026"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Bank account"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31805;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/building-library (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31805;2073:14348;2093:22025",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 3,
+             "width": 18,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31805;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31805;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Bank account",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31805;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31805;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31806",
+         "name": "Saved addresses",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 268,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:1229"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Saved addresses"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31806;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/map-pin",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31806;2073:14348;341:8002",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 4.5,
+             "y": 3,
+             "width": 15,
+             "height": 18.75,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31806;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31806;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Saved addresses",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31806;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31806;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31807",
+         "name": "Business billing",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 324,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:3325"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Business billing"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31807;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/briefcase",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31807;2073:14348;341:6745",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 3,
+             "width": 18,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31807;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31807;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Business billing",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31807;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31807;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2171:31808",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 719,
+       "width": 390,
+       "height": 1,
+       "fill": "#E6E6E6",
+       "children": []
+      },
+      {
+       "id": "2171:31809",
+       "name": "Section · App",
+       "type": "FRAME",
+       "x": 0,
+       "y": 720,
+       "width": 390,
+       "height": 100,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2171:31810",
+         "name": "Group header",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 44,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 20,
+          "paddingRight": 24,
+          "paddingBottom": 4,
+          "paddingLeft": 24,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31811",
+           "name": "App",
+           "type": "TEXT",
+           "x": 24,
+           "y": 20,
+           "width": 29,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "App",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.6
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31812",
+         "name": "Appearance",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 44,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22029"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Appearance"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31812;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/device-phone-mobile (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31812;2073:14348;2093:22028",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 6,
+             "y": 1.5,
+             "width": 12,
+             "height": 21,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31812;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31812;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Appearance",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31812;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31812;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2171:31813",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 820,
+       "width": 390,
+       "height": 1,
+       "fill": "#E6E6E6",
+       "children": []
+      },
+      {
+       "id": "2171:31814",
+       "name": "Section · Support",
+       "type": "FRAME",
+       "x": 0,
+       "y": 821,
+       "width": 390,
+       "height": 380,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2171:31815",
+         "name": "Group header",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 44,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 20,
+          "paddingRight": 24,
+          "paddingBottom": 4,
+          "paddingLeft": 24,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31816",
+           "name": "Support",
+           "type": "TEXT",
+           "x": 24,
+           "y": 20,
+           "width": 57,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "Support",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.6
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31817",
+         "name": "FAQs",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 44,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22032"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "FAQs"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31817;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/question-mark-circle (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31817;2073:14348;2093:22031",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 3,
+             "width": 18,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31817;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31817;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "FAQs",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31817;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31817;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31818",
+         "name": "Report a problem",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 100,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22035"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Report a problem"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31818;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/flag (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31818;2073:14348;2093:22034",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 3,
+             "y": 3,
+             "width": 18.29,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31818;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31818;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Report a problem",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31818;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31818;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31819",
+         "name": "Feedback & review",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 156,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22038"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Feedback & review"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31819;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/chat-bubble-left-ellipsis (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31819;2073:14348;2093:22037",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.25,
+             "y": 3,
+             "width": 19.5,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31819;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31819;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Feedback & review",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31819;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31819;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31820",
+         "name": "Contact us",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 212,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:3327"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Contact us"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31820;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/envelope",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31820;2073:14348;341:7489",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 2.25,
+             "y": 4.5,
+             "width": 19.5,
+             "height": 15,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31820;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31820;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Contact us",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31820;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31820;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31821",
+         "name": "Who we are",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 268,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22041"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Who we are"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31821;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/users (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31821;2073:14348;2093:22040",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.25,
+             "y": 3,
+             "width": 19.5,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31821;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31821;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Who we are",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31821;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31821;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31822",
+         "name": "Request an item",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 324,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22044"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Request an item"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31822;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/inbox-arrow-down (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31822;2073:14348;2093:22043",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 2.25,
+             "y": 3,
+             "width": 19.5,
+             "height": 17.25,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31822;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31822;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Request an item",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31822;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31822;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2171:31823",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 1201,
+       "width": 390,
+       "height": 1,
+       "fill": "#E6E6E6",
+       "children": []
+      },
+      {
+       "id": "2171:31824",
+       "name": "Section · Legal",
+       "type": "FRAME",
+       "x": 0,
+       "y": 1202,
+       "width": 390,
+       "height": 156,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 0,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2171:31825",
+         "name": "Group header",
+         "type": "FRAME",
+         "x": 0,
+         "y": 0,
+         "width": 390,
+         "height": 44,
+         "fill": null,
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 20,
+          "paddingRight": 24,
+          "paddingBottom": 4,
+          "paddingLeft": 24,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "children": [
+          {
+           "id": "2171:31826",
+           "name": "Legal",
+           "type": "TEXT",
+           "x": 24,
+           "y": 20,
+           "width": 37,
+           "height": 20,
+           "fill": "#000000",
+           "characters": "Legal",
+           "fontSize": 14,
+           "fontName": {
+            "family": "Plus Jakarta Sans",
+            "style": "SemiBold"
+           },
+           "lineHeight": {
+            "unit": "PIXELS",
+            "value": 20
+           },
+           "letterSpacing": {
+            "unit": "PERCENT",
+            "value": 0
+           },
+           "fills": [
+            {
+             "type": "SOLID",
+             "color": "#000000",
+             "opacity": 0.6
+            }
+           ],
+           "children": []
+          }
+         ]
+        },
+        {
+         "id": "2171:31827",
+         "name": "Terms & conditions",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 44,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "1:3333"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Terms & conditions"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31827;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/document-text",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31827;2073:14348;341:7447",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 4.5,
+             "y": 2.25,
+             "width": 15,
+             "height": 19.5,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31827;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31827;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Terms & conditions",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31827;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31827;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "2171:31828",
+         "name": "Privacy policy",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 100,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22047"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Privacy policy"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31828;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/lock-closed (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31828;2073:14348;2093:22046",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 4.5,
+             "y": 2.25,
+             "width": 15,
+             "height": 19.5,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31828;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 266,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31828;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 266,
+             "height": 24,
+             "fill": "#000000",
+             "characters": "Privacy policy",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31828;2073:14353",
+           "name": "Chevron",
+           "type": "INSTANCE",
+           "x": 346,
+           "y": 18,
+           "width": 20,
+           "height": 20,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-mini/chevron-right",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31828;2073:14353;341:7038",
+             "name": "Icon",
+             "type": "VECTOR",
+             "x": 7,
+             "y": 15,
+             "width": 10,
+             "height": 6,
+             "fill": "#000000",
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "2171:31829",
+       "name": "Divider",
+       "type": "RECTANGLE",
+       "x": 0,
+       "y": 1358,
+       "width": 390,
+       "height": 1,
+       "fill": "#E6E6E6",
+       "children": []
+      },
+      {
+       "id": "2171:31830",
+       "name": "Logout",
+       "type": "FRAME",
+       "x": 0,
+       "y": 1359,
+       "width": 390,
+       "height": 64,
+       "fill": null,
+       "layout": {
+        "mode": "VERTICAL",
+        "paddingTop": 8,
+        "paddingRight": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "MIN",
+        "counterAxisAlignItems": "MIN"
+       },
+       "children": [
+        {
+         "id": "2171:31831",
+         "name": "Logout",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 8,
+         "width": 390,
+         "height": 56,
+         "fill": "#FFFFFF",
+         "layout": {
+          "mode": "HORIZONTAL",
+          "paddingTop": 0,
+          "paddingRight": 24,
+          "paddingBottom": 0,
+          "paddingLeft": 24,
+          "itemSpacing": 16,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "mainComponent": {
+          "name": "Size=Single",
+          "componentSetName": "List row"
+         },
+         "componentProperties": {
+          "Sub-line#2073:27": {
+           "type": "TEXT",
+           "value": "Home is your default"
+          },
+          "Leading icon#2073:26": {
+           "type": "INSTANCE_SWAP",
+           "value": "2093:22050"
+          },
+          "Show chevron#2073:24": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show value#2073:23": {
+           "type": "BOOLEAN",
+           "value": false
+          },
+          "Show leading icon#2073:25": {
+           "type": "BOOLEAN",
+           "value": true
+          },
+          "Value#2073:22": {
+           "type": "TEXT",
+           "value": "2"
+          },
+          "Label#2073:21": {
+           "type": "TEXT",
+           "value": "Logout"
+          },
+          "Size": {
+           "type": "VARIANT",
+           "value": "Single"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31831;2073:14348",
+           "name": "Leading icon",
+           "type": "INSTANCE",
+           "x": 24,
+           "y": 16,
+           "width": 24,
+           "height": 24,
+           "fill": null,
+           "mainComponent": {
+            "name": "heroicons-outline/arrow-right-on-rectangle (local)",
+            "componentSetName": null
+           },
+           "componentProperties": {},
+           "children": [
+            {
+             "id": "I2171:31831;2073:14348;2093:22049",
+             "name": "Vector",
+             "type": "VECTOR",
+             "x": 5.25,
+             "y": 3,
+             "width": 16.5,
+             "height": 18,
+             "fill": null,
+             "children": []
+            }
+           ]
+          },
+          {
+           "id": "I2171:31831;2073:14350",
+           "name": "Text",
+           "type": "FRAME",
+           "x": 64,
+           "y": 16,
+           "width": 302,
+           "height": 24,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 2,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+           },
+           "children": [
+            {
+             "id": "I2171:31831;2073:14351",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 0,
+             "y": 0,
+             "width": 302,
+             "height": 24,
+             "fill": "#D92D20",
+             "characters": "Logout",
+             "fontSize": 16,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 24
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#D92D20",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "2171:31832",
+     "name": "Tab bar",
+     "type": "INSTANCE",
+     "x": 0,
+     "y": 742,
+     "width": 390,
+     "height": 102,
+     "fill": null,
+     "layout": {
+      "mode": "VERTICAL",
+      "paddingTop": 0,
+      "paddingRight": 0,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "itemSpacing": 0,
+      "primaryAxisAlignItems": "MIN",
+      "counterAxisAlignItems": "MIN"
+     },
+     "mainComponent": {
+      "name": "Active=Profile",
+      "componentSetName": "Tab bar"
+     },
+     "componentProperties": {
+      "Active": {
+       "type": "VARIANT",
+       "value": "Profile"
+      }
+     },
+     "children": [
+      {
+       "id": "I2171:31832;2071:14348",
+       "name": "Navbar",
+       "type": "INSTANCE",
+       "x": 0,
+       "y": 0,
+       "width": 390,
+       "height": 81,
+       "fill": "#FFFFFF",
+       "layout": {
+        "mode": "HORIZONTAL",
+        "paddingTop": 8,
+        "paddingRight": 0,
+        "paddingBottom": 8,
+        "paddingLeft": 0,
+        "itemSpacing": 0,
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "MIN"
+       },
+       "mainComponent": {
+        "name": "State=Dark",
+        "componentSetName": "Navbar"
+       },
+       "componentProperties": {
+        "State": {
+         "type": "VARIANT",
+         "value": "Dark"
+        }
+       },
+       "children": [
+        {
+         "id": "I2171:31832;2071:14348;395:23622",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 0,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "mainComponent": {
+          "name": "Tab=Dark",
+          "componentSetName": "Tab - Light mode"
+         },
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31832;2071:14348;395:23622;394:23510",
+           "name": "Tab - Light mode",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 0,
+           "width": 78,
+           "height": 65,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER"
+           },
+           "mainComponent": {
+            "name": "State=Default",
+            "componentSetName": "Tab - Light mode"
+           },
+           "componentProperties": {
+            "Icon Selecetd State#395:36": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:30"
+            },
+            "Label#394:30": {
+             "type": "TEXT",
+             "value": "Home"
+            },
+            "Icon Unselected State#394:27": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:35"
+            },
+            "State": {
+             "type": "VARIANT",
+             "value": "Default"
+            }
+           },
+           "children": [
+            {
+             "id": "I2171:31832;2071:14348;395:23622;394:23510;394:23489",
+             "name": "home-outline",
+             "type": "INSTANCE",
+             "x": 27,
+             "y": 10.5,
+             "width": 24,
+             "height": 24,
+             "fill": null,
+             "mainComponent": {
+              "name": "home-outline",
+              "componentSetName": null
+             },
+             "componentProperties": {},
+             "children": [
+              {
+               "id": "I2171:31832;2071:14348;395:23622;394:23510;394:23489;431:34585",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 3,
+               "y": 3,
+               "width": 18,
+               "height": 18,
+               "fill": null,
+               "children": []
+              }
+             ]
+            },
+            {
+             "id": "I2171:31832;2071:14348;395:23622;394:23510;394:23490",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 21,
+             "y": 38.5,
+             "width": 36,
+             "height": 16,
+             "fill": "#000000",
+             "characters": "Home",
+             "fontSize": 12,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 0.6
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2171:31832;2071:14348;395:23623",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 78,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "mainComponent": {
+          "name": "Tab=Dark",
+          "componentSetName": "Tab - Light mode"
+         },
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31832;2071:14348;395:23623;394:23510",
+           "name": "Tab - Light mode",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 0,
+           "width": 78,
+           "height": 65,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER"
+           },
+           "mainComponent": {
+            "name": "State=Default",
+            "componentSetName": "Tab - Light mode"
+           },
+           "componentProperties": {
+            "Icon Selecetd State#395:36": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:3261"
+            },
+            "Label#394:30": {
+             "type": "TEXT",
+             "value": "Saved"
+            },
+            "Icon Unselected State#394:27": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:66"
+            },
+            "State": {
+             "type": "VARIANT",
+             "value": "Default"
+            }
+           },
+           "children": [
+            {
+             "id": "I2171:31832;2071:14348;395:23623;394:23510;394:23489",
+             "name": "heroicons-outline/heart",
+             "type": "INSTANCE",
+             "x": 27,
+             "y": 10.5,
+             "width": 24,
+             "height": 24,
+             "fill": null,
+             "mainComponent": {
+              "name": "heroicons-outline/heart",
+              "componentSetName": null
+             },
+             "componentProperties": {},
+             "children": [
+              {
+               "id": "I2171:31832;2071:14348;395:23623;394:23510;394:23489;309:2446",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 3,
+               "y": 3.75,
+               "width": 18,
+               "height": 16.5,
+               "fill": null,
+               "children": []
+              }
+             ]
+            },
+            {
+             "id": "I2171:31832;2071:14348;395:23623;394:23510;394:23490",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 20.5,
+             "y": 38.5,
+             "width": 37,
+             "height": 16,
+             "fill": "#000000",
+             "characters": "Saved",
+             "fontSize": 12,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 0.6
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2171:31832;2071:14348;431:33953",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 156,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "mainComponent": {
+          "name": "Tab=Dark",
+          "componentSetName": "Tab - Light mode"
+         },
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31832;2071:14348;431:33953;394:23510",
+           "name": "Tab - Light mode",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 0,
+           "width": 78,
+           "height": 65,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER"
+           },
+           "mainComponent": {
+            "name": "State=Default",
+            "componentSetName": "Tab - Light mode"
+           },
+           "componentProperties": {
+            "Icon Selecetd State#395:36": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:70"
+            },
+            "Label#394:30": {
+             "type": "TEXT",
+             "value": "Post"
+            },
+            "Icon Unselected State#394:27": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:70"
+            },
+            "State": {
+             "type": "VARIANT",
+             "value": "Default"
+            }
+           },
+           "children": [
+            {
+             "id": "I2171:31832;2071:14348;431:33953;394:23510;394:23489",
+             "name": "PlusSquare",
+             "type": "INSTANCE",
+             "x": 27,
+             "y": 10.5,
+             "width": 24,
+             "height": 24,
+             "fill": null,
+             "mainComponent": {
+              "name": "PlusSquare",
+              "componentSetName": null
+             },
+             "componentProperties": {},
+             "children": [
+              {
+               "id": "I2171:31832;2071:14348;431:33953;394:23510;394:23489;431:34812",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 1.25,
+               "y": 1.25,
+               "width": 21.5,
+               "height": 21.5,
+               "fill": "#000000",
+               "children": []
+              }
+             ]
+            },
+            {
+             "id": "I2171:31832;2071:14348;431:33953;394:23510;394:23490",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 25.5,
+             "y": 38.5,
+             "width": 27,
+             "height": 16,
+             "fill": "#000000",
+             "characters": "Post",
+             "fontSize": 12,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 0.6
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2171:31832;2071:14348;395:23994",
+         "name": "Post",
+         "type": "FRAME",
+         "x": 234,
+         "y": 8,
+         "width": 1,
+         "height": 65,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 8,
+          "paddingRight": 0,
+          "paddingBottom": 8,
+          "paddingLeft": 0,
+          "itemSpacing": 4,
+          "primaryAxisAlignItems": "CENTER",
+          "counterAxisAlignItems": "CENTER"
+         },
+         "children": []
+        },
+        {
+         "id": "I2171:31832;2071:14348;395:23627",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 235,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "mainComponent": {
+          "name": "Tab=Dark",
+          "componentSetName": "Tab - Light mode"
+         },
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31832;2071:14348;395:23627;394:23510",
+           "name": "Tab - Light mode",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 0,
+           "width": 78,
+           "height": 65,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER"
+           },
+           "mainComponent": {
+            "name": "State=Default",
+            "componentSetName": "Tab - Light mode"
+           },
+           "componentProperties": {
+            "Icon Selecetd State#395:36": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:3335"
+            },
+            "Label#394:30": {
+             "type": "TEXT",
+             "value": "Rentals"
+            },
+            "Icon Unselected State#394:27": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:3335"
+            },
+            "State": {
+             "type": "VARIANT",
+             "value": "Default"
+            }
+           },
+           "children": [
+            {
+             "id": "I2171:31832;2071:14348;395:23627;394:23510;394:23489",
+             "name": "heroicons-outline/clipboard-document",
+             "type": "INSTANCE",
+             "x": 27,
+             "y": 10.5,
+             "width": 24,
+             "height": 24,
+             "fill": null,
+             "mainComponent": {
+              "name": "heroicons-outline/clipboard-document",
+              "componentSetName": null
+             },
+             "componentProperties": {},
+             "children": [
+              {
+               "id": "I2171:31832;2071:14348;395:23627;394:23510;394:23489;341:7091",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 3.75,
+               "y": 2.25,
+               "width": 16.5,
+               "height": 19.5,
+               "fill": null,
+               "children": []
+              }
+             ]
+            },
+            {
+             "id": "I2171:31832;2071:14348;395:23627;394:23510;394:23490",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 17.5,
+             "y": 38.5,
+             "width": 43,
+             "height": 16,
+             "fill": "#000000",
+             "characters": "Rentals",
+             "fontSize": 12,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "Medium"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#000000",
+               "opacity": 0.6
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "id": "I2171:31832;2071:14348;395:23628",
+         "name": "Tab - Light mode",
+         "type": "INSTANCE",
+         "x": 313,
+         "y": 8,
+         "width": 78,
+         "height": 65,
+         "fill": null,
+         "layout": {
+          "mode": "VERTICAL",
+          "paddingTop": 0,
+          "paddingRight": 0,
+          "paddingBottom": 0,
+          "paddingLeft": 0,
+          "itemSpacing": 0,
+          "primaryAxisAlignItems": "MIN",
+          "counterAxisAlignItems": "MIN"
+         },
+         "mainComponent": {
+          "name": "Tab=Dark",
+          "componentSetName": "Tab - Light mode"
+         },
+         "componentProperties": {
+          "Tab": {
+           "type": "VARIANT",
+           "value": "Dark"
+          }
+         },
+         "children": [
+          {
+           "id": "I2171:31832;2071:14348;395:23628;394:23510",
+           "name": "Tab - Light mode",
+           "type": "INSTANCE",
+           "x": 0,
+           "y": 0,
+           "width": 78,
+           "height": 65,
+           "fill": null,
+           "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 8,
+            "paddingLeft": 0,
+            "itemSpacing": 4,
+            "primaryAxisAlignItems": "CENTER",
+            "counterAxisAlignItems": "CENTER"
+           },
+           "mainComponent": {
+            "name": "State=Active",
+            "componentSetName": "Tab - Light mode"
+           },
+           "componentProperties": {
+            "Icon Unselected State#394:27": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:37"
+            },
+            "Icon Selecetd State#395:36": {
+             "type": "INSTANCE_SWAP",
+             "value": "1:39"
+            },
+            "Label#394:30": {
+             "type": "TEXT",
+             "value": "Profile"
+            },
+            "State": {
+             "type": "VARIANT",
+             "value": "Active"
+            }
+           },
+           "children": [
+            {
+             "id": "I2171:31832;2071:14348;395:23628;394:23510;394:23499",
+             "name": "heroicons-solid/user",
+             "type": "INSTANCE",
+             "x": 27,
+             "y": 10.5,
+             "width": 24,
+             "height": 24,
+             "fill": null,
+             "mainComponent": {
+              "name": "heroicons-solid/user",
+              "componentSetName": null
+             },
+             "componentProperties": {},
+             "children": [
+              {
+               "id": "I2171:31832;2071:14348;395:23628;394:23510;394:23499;341:8726",
+               "name": "Icon",
+               "type": "VECTOR",
+               "x": 3.75,
+               "y": 1.5,
+               "width": 16.5,
+               "height": 21,
+               "fill": "#635BE8",
+               "children": []
+              }
+             ]
+            },
+            {
+             "id": "I2171:31832;2071:14348;395:23628;394:23510;394:23500",
+             "name": "Label",
+             "type": "TEXT",
+             "x": 20,
+             "y": 38.5,
+             "width": 38,
+             "height": 16,
+             "fill": "#635BE8",
+             "characters": "Profile",
+             "fontSize": 12,
+             "fontName": {
+              "family": "Plus Jakarta Sans",
+              "style": "SemiBold"
+             },
+             "lineHeight": {
+              "unit": "PIXELS",
+              "value": 16
+             },
+             "letterSpacing": {
+              "unit": "PERCENT",
+              "value": 0
+             },
+             "fills": [
+              {
+               "type": "SOLID",
+               "color": "#635BE8",
+               "opacity": 1
+              }
+             ],
+             "children": []
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "id": "I2171:31832;2075:14349",
+       "name": "Home Indicator",
+       "type": "FRAME",
+       "x": 0,
+       "y": 81,
+       "width": 390,
+       "height": 21,
+       "fill": "#FFFFFF",
+       "children": [
+        {
+         "id": "I2171:31832;2075:14350",
+         "name": "Home Indicator",
+         "type": "RECTANGLE",
+         "x": 128,
+         "y": 8,
+         "width": 134,
+         "height": 5,
+         "fill": "#000000",
+         "children": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

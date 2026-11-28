@@ -1,0 +1,3582 @@
+{
+  "nodes": [
+    {
+      "id": "2171:31305",
+      "name": "shop-return-courier · item arriving, with the rider (full scroll) · early return asked",
+      "type": "FRAME",
+      "x": 9480,
+      "y": 120,
+      "width": 390,
+      "height": 844,
+      "fill": "#ffffff",
+      "children": [
+        {
+          "id": "2171:31306",
+          "name": "Body (scroll)",
+          "type": "FRAME",
+          "x": 0,
+          "y": 110,
+          "width": 390,
+          "height": 1560,
+          "fill": null,
+          "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 8,
+            "paddingRight": 0,
+            "paddingBottom": 32,
+            "paddingLeft": 0,
+            "itemSpacing": 24,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER"
+          },
+          "children": [
+            {
+              "id": "2171:31307",
+              "name": "Title",
+              "type": "FRAME",
+              "x": 24,
+              "y": 8,
+              "width": 342,
+              "height": 52,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 4,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31308",
+                  "name": "Item arriving",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 28,
+                  "fill": "#000000",
+                  "characters": "Item arriving",
+                  "fontSize": 20,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Bold"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 28
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "2171:31309",
+                  "name": "Meta VR Glasses · RN-24857 · Meera J.",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 32,
+                  "width": 342,
+                  "height": 20,
+                  "fill": "#00000099",
+                  "characters": "Meta VR Glasses · RN-24857 · Meera J.",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Regular"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#00000099"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "2171:31428",
+              "name": "NEW · Early return request",
+              "type": "FRAME",
+              "x": 24,
+              "y": 84,
+              "width": 342,
+              "height": 172,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 8,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31429",
+                  "name": "The customer wants to return it early",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 24,
+                  "fill": "#000000",
+                  "characters": "The customer wants to return it early",
+                  "fontSize": 16,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "SemiBold"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "2171:31430",
+                  "name": "A rider would bring Meta VR Glasses back",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 32,
+                  "width": 342,
+                  "height": 80,
+                  "fill": "#000000b2",
+                  "characters": "A rider would bring Meta VR Glasses back Tue 24 Nov, 2:00 – 3:00 pm (2 days early). Accept by 1:42 pm today. If you don't answer, it comes back Thu 26 Nov.",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Regular"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000b2"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "2171:31431",
+                  "name": "Actions",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 120,
+                  "width": 342,
+                  "height": 52,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "paddingTop": 8,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2171:31432",
+                      "name": "Button · Decline",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 8,
+                      "width": 168,
+                      "height": 44,
+                      "fill": "#ffffff",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 4,
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": {
+                        "id": "1:141",
+                        "name": "Button/Type=Secondary"
+                      },
+                      "componentProperties": {
+                        "Left Icon#309:6": {
+                          "type": "INSTANCE_SWAP",
+                          "value": "1:131"
+                        },
+                        "Right Icon#309:5": {
+                          "type": "INSTANCE_SWAP",
+                          "value": "1:129"
+                        },
+                        "Label#309:8": {
+                          "type": "TEXT",
+                          "value": "Decline"
+                        },
+                        "Show Left Icon#309:4": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Show Right Icon#309:7": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Type": {
+                          "type": "VARIANT",
+                          "value": "Secondary"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31432;309:3551",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 58,
+                          "y": 12,
+                          "width": 52,
+                          "height": 20,
+                          "fill": "#635be8",
+                          "characters": "Decline",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold"
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            "#635be8"
+                          ],
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31433",
+                      "name": "Button · Accept",
+                      "type": "INSTANCE",
+                      "x": 176,
+                      "y": 8,
+                      "width": 166,
+                      "height": 44,
+                      "fill": "#635be8",
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 4,
+                        "primaryAxisAlignItems": "CENTER",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "mainComponent": {
+                        "id": "1:137",
+                        "name": "Button/Type=Primary"
+                      },
+                      "componentProperties": {
+                        "Left Icon#309:6": {
+                          "type": "INSTANCE_SWAP",
+                          "value": "1:131"
+                        },
+                        "Right Icon#309:5": {
+                          "type": "INSTANCE_SWAP",
+                          "value": "1:129"
+                        },
+                        "Label#309:8": {
+                          "type": "TEXT",
+                          "value": "Accept"
+                        },
+                        "Show Left Icon#309:4": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Show Right Icon#309:7": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Type": {
+                          "type": "VARIANT",
+                          "value": "Primary"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31433;309:676",
+                          "name": "Label",
+                          "type": "TEXT",
+                          "x": 58,
+                          "y": 12,
+                          "width": 50,
+                          "height": 20,
+                          "fill": "#ffffff",
+                          "characters": "Accept",
+                          "fontSize": 14,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "SemiBold"
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 20
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            "#ffffff"
+                          ],
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2171:31311",
+              "name": "Block · Return",
+              "type": "FRAME",
+              "x": 24,
+              "y": 280,
+              "width": 342,
+              "height": 272,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31312",
+                  "name": "Return",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 24,
+                  "fill": "#000000",
+                  "characters": "Return",
+                  "fontSize": 16,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Bold"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "2171:31313",
+                  "name": "Steps",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 36,
+                  "width": 342,
+                  "height": 236,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 0,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2171:31314",
+                      "name": "Timeline step · Return window picked",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 0,
+                      "width": 342,
+                      "height": 40,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 12,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "mainComponent": {
+                        "id": "2074:14341",
+                        "name": "Timeline step/State=Current"
+                      },
+                      "componentProperties": {
+                        "Show time#2074:15": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Show line#2074:12": {
+                          "type": "BOOLEAN",
+                          "value": true
+                        },
+                        "State": {
+                          "type": "VARIANT",
+                          "value": "Current"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31314;2074:14342",
+                          "name": "Rail",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 20,
+                          "height": 40,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "CENTER"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31314;2074:14343",
+                              "name": "Dot",
+                              "type": "FRAME",
+                              "x": 0,
+                              "y": 0,
+                              "width": 20,
+                              "height": 20,
+                              "fill": "#ededfc",
+                              "layout": {
+                                "mode": "HORIZONTAL",
+                                "paddingTop": 0,
+                                "paddingRight": 0,
+                                "paddingBottom": 0,
+                                "paddingLeft": 0,
+                                "itemSpacing": 0,
+                                "primaryAxisAlignItems": "CENTER",
+                                "counterAxisAlignItems": "CENTER"
+                              },
+                              "children": [
+                                {
+                                  "id": "I2171:31314;2074:14344",
+                                  "name": "Core",
+                                  "type": "ELLIPSE",
+                                  "x": 6,
+                                  "y": 6,
+                                  "width": 8,
+                                  "height": 8,
+                                  "fill": "#635be8",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "id": "I2171:31314;2074:14345",
+                              "name": "Line",
+                              "type": "RECTANGLE",
+                              "x": 9,
+                              "y": 24,
+                              "width": 2,
+                              "height": 16,
+                              "fill": "#e6e6e6",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "I2171:31314;2074:14346",
+                          "name": "Text",
+                          "type": "FRAME",
+                          "x": 32,
+                          "y": 0,
+                          "width": 310,
+                          "height": 40,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 20,
+                            "paddingLeft": 0,
+                            "itemSpacing": 2,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31314;2074:14347",
+                              "name": "Title",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 0,
+                              "width": 310,
+                              "height": 20,
+                              "fill": "#000000",
+                              "characters": "Return window picked",
+                              "fontSize": 14,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 20
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31315",
+                      "name": "Timeline step · Rider booked",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 40,
+                      "width": 342,
+                      "height": 40,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 12,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "mainComponent": {
+                        "id": "2074:14349",
+                        "name": "Timeline step/State=Upcoming"
+                      },
+                      "componentProperties": {
+                        "Show time#2074:15": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Show line#2074:12": {
+                          "type": "BOOLEAN",
+                          "value": true
+                        },
+                        "State": {
+                          "type": "VARIANT",
+                          "value": "Upcoming"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31315;2074:14350",
+                          "name": "Rail",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 20,
+                          "height": 40,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "CENTER"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31315;2074:14351",
+                              "name": "Dot",
+                              "type": "FRAME",
+                              "x": 0,
+                              "y": 0,
+                              "width": 20,
+                              "height": 20,
+                              "fill": "#ffffff",
+                              "layout": {
+                                "mode": "HORIZONTAL",
+                                "paddingTop": 0,
+                                "paddingRight": 0,
+                                "paddingBottom": 0,
+                                "paddingLeft": 0,
+                                "itemSpacing": 0,
+                                "primaryAxisAlignItems": "CENTER",
+                                "counterAxisAlignItems": "CENTER"
+                              },
+                              "children": []
+                            },
+                            {
+                              "id": "I2171:31315;2074:14352",
+                              "name": "Line",
+                              "type": "RECTANGLE",
+                              "x": 9,
+                              "y": 24,
+                              "width": 2,
+                              "height": 16,
+                              "fill": "#e6e6e6",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "I2171:31315;2074:14353",
+                          "name": "Text",
+                          "type": "FRAME",
+                          "x": 32,
+                          "y": 0,
+                          "width": 310,
+                          "height": 40,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 20,
+                            "paddingLeft": 0,
+                            "itemSpacing": 2,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31315;2074:14354",
+                              "name": "Title",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 0,
+                              "width": 310,
+                              "height": 20,
+                              "fill": "#00000099",
+                              "characters": "Rider booked",
+                              "fontSize": 14,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 20
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#00000099"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31316",
+                      "name": "Timeline step · Item arriving",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 80,
+                      "width": 342,
+                      "height": 40,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 12,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "mainComponent": {
+                        "id": "2074:14349",
+                        "name": "Timeline step/State=Upcoming"
+                      },
+                      "componentProperties": {
+                        "Show time#2074:15": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "Show line#2074:12": {
+                          "type": "BOOLEAN",
+                          "value": true
+                        },
+                        "State": {
+                          "type": "VARIANT",
+                          "value": "Upcoming"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31316;2074:14350",
+                          "name": "Rail",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 20,
+                          "height": 40,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "CENTER"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31316;2074:14351",
+                              "name": "Dot",
+                              "type": "FRAME",
+                              "x": 0,
+                              "y": 0,
+                              "width": 20,
+                              "height": 20,
+                              "fill": "#ffffff",
+                              "layout": {
+                                "mode": "HORIZONTAL",
+                                "paddingTop": 0,
+                                "paddingRight": 0,
+                                "paddingBottom": 0,
+                                "paddingLeft": 0,
+                                "itemSpacing": 0,
+                                "primaryAxisAlignItems": "CENTER",
+                                "counterAxisAlignItems": "CENTER"
+                              },
+                              "children": []
+                            },
+                            {
+                              "id": "I2171:31316;2074:14352",
+                              "name": "Line",
+                              "type": "RECTANGLE",
+                              "x": 9,
+                              "y": 24,
+                              "width": 2,
+                              "height": 16,
+                              "fill": "#e6e6e6",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "I2171:31316;2074:14353",
+                          "name": "Text",
+                          "type": "FRAME",
+                          "x": 32,
+                          "y": 0,
+                          "width": 310,
+                          "height": 40,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 20,
+                            "paddingLeft": 0,
+                            "itemSpacing": 2,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31316;2074:14354",
+                              "name": "Title",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 0,
+                              "width": 310,
+                              "height": 20,
+                              "fill": "#00000099",
+                              "characters": "Item arriving",
+                              "fontSize": 14,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 20
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#00000099"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31317",
+                      "name": "Timeline step · Back at the shop",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 120,
+                      "width": 342,
+                      "height": 58,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 12,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "mainComponent": {
+                        "id": "2074:14349",
+                        "name": "Timeline step/State=Upcoming"
+                      },
+                      "componentProperties": {
+                        "Show time#2074:15": {
+                          "type": "BOOLEAN",
+                          "value": true
+                        },
+                        "Show line#2074:12": {
+                          "type": "BOOLEAN",
+                          "value": true
+                        },
+                        "State": {
+                          "type": "VARIANT",
+                          "value": "Upcoming"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31317;2074:14350",
+                          "name": "Rail",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 20,
+                          "height": 58,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "CENTER"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31317;2074:14351",
+                              "name": "Dot",
+                              "type": "FRAME",
+                              "x": 0,
+                              "y": 0,
+                              "width": 20,
+                              "height": 20,
+                              "fill": "#ffffff",
+                              "layout": {
+                                "mode": "HORIZONTAL",
+                                "paddingTop": 0,
+                                "paddingRight": 0,
+                                "paddingBottom": 0,
+                                "paddingLeft": 0,
+                                "itemSpacing": 0,
+                                "primaryAxisAlignItems": "CENTER",
+                                "counterAxisAlignItems": "CENTER"
+                              },
+                              "children": []
+                            },
+                            {
+                              "id": "I2171:31317;2074:14352",
+                              "name": "Line",
+                              "type": "RECTANGLE",
+                              "x": 9,
+                              "y": 24,
+                              "width": 2,
+                              "height": 34,
+                              "fill": "#e6e6e6",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "I2171:31317;2074:14353",
+                          "name": "Text",
+                          "type": "FRAME",
+                          "x": 32,
+                          "y": 0,
+                          "width": 310,
+                          "height": 58,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 20,
+                            "paddingLeft": 0,
+                            "itemSpacing": 2,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31317;2074:14354",
+                              "name": "Title",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 0,
+                              "width": 310,
+                              "height": 20,
+                              "fill": "#00000099",
+                              "characters": "Back at the shop",
+                              "fontSize": 14,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 20
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#00000099"
+                              ],
+                              "children": []
+                            },
+                            {
+                              "id": "I2171:31317;2074:14355",
+                              "name": "Time",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 22,
+                              "width": 310,
+                              "height": 16,
+                              "fill": "#00000099",
+                              "characters": "Record it in the app",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#00000099"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31318",
+                      "name": "Timeline step · Received by the shop",
+                      "type": "INSTANCE",
+                      "x": 0,
+                      "y": 178,
+                      "width": 342,
+                      "height": 58,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 12,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "mainComponent": {
+                        "id": "2074:14349",
+                        "name": "Timeline step/State=Upcoming"
+                      },
+                      "componentProperties": {
+                        "Show time#2074:15": {
+                          "type": "BOOLEAN",
+                          "value": true
+                        },
+                        "Show line#2074:12": {
+                          "type": "BOOLEAN",
+                          "value": false
+                        },
+                        "State": {
+                          "type": "VARIANT",
+                          "value": "Upcoming"
+                        }
+                      },
+                      "children": [
+                        {
+                          "id": "I2171:31318;2074:14350",
+                          "name": "Rail",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 20,
+                          "height": 58,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "CENTER"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31318;2074:14351",
+                              "name": "Dot",
+                              "type": "FRAME",
+                              "x": 0,
+                              "y": 0,
+                              "width": 20,
+                              "height": 20,
+                              "fill": "#ffffff",
+                              "layout": {
+                                "mode": "HORIZONTAL",
+                                "paddingTop": 0,
+                                "paddingRight": 0,
+                                "paddingBottom": 0,
+                                "paddingLeft": 0,
+                                "itemSpacing": 0,
+                                "primaryAxisAlignItems": "CENTER",
+                                "counterAxisAlignItems": "CENTER"
+                              },
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "I2171:31318;2074:14353",
+                          "name": "Text",
+                          "type": "FRAME",
+                          "x": 32,
+                          "y": 0,
+                          "width": 310,
+                          "height": 58,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 20,
+                            "paddingLeft": 0,
+                            "itemSpacing": 2,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "I2171:31318;2074:14354",
+                              "name": "Title",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 0,
+                              "width": 310,
+                              "height": 20,
+                              "fill": "#00000099",
+                              "characters": "Received by the shop",
+                              "fontSize": 14,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "SemiBold"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 20
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#00000099"
+                              ],
+                              "children": []
+                            },
+                            {
+                              "id": "I2171:31318;2074:14355",
+                              "name": "Time",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 22,
+                              "width": 310,
+                              "height": 16,
+                              "fill": "#00000099",
+                              "characters": "Report any problem within 24 hours",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#00000099"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2171:31319",
+              "name": "Notice · Info",
+              "type": "INSTANCE",
+              "x": 24,
+              "y": 576,
+              "width": 342,
+              "height": 132,
+              "fill": "#eff8ff",
+              "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 16,
+                "paddingRight": 16,
+                "paddingBottom": 16,
+                "paddingLeft": 16,
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "mainComponent": {
+                "id": "2074:14360",
+                "name": "Notice card/Tone=Info"
+              },
+              "componentProperties": {
+                "Show link#2074:40": {
+                  "type": "BOOLEAN",
+                  "value": false
+                },
+                "Show title#2074:37": {
+                  "type": "BOOLEAN",
+                  "value": false
+                },
+                "Tone": {
+                  "type": "VARIANT",
+                  "value": "Info"
+                }
+              },
+              "children": [
+                {
+                  "id": "I2171:31319;2074:14361",
+                  "name": "Icon",
+                  "type": "INSTANCE",
+                  "x": 16,
+                  "y": 16,
+                  "width": 20,
+                  "height": 20,
+                  "fill": null,
+                  "mainComponent": {
+                    "id": "1:162",
+                    "name": "heroicons-outline/information-circle"
+                  },
+                  "componentProperties": {},
+                  "children": [
+                    {
+                      "id": "I2171:31319;2074:14361;341:7868",
+                      "name": "Icon",
+                      "type": "VECTOR",
+                      "x": 2.5,
+                      "y": 2.5,
+                      "width": 15,
+                      "height": 15,
+                      "fill": null,
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "I2171:31319;2074:14363",
+                  "name": "Text",
+                  "type": "FRAME",
+                  "x": 48,
+                  "y": 16,
+                  "width": 278,
+                  "height": 100,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "I2171:31319;2074:14365",
+                      "name": "Body",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 278,
+                      "height": 100,
+                      "fill": "#000000b2",
+                      "characters": "When the rider hands it over, check the seal, then record its condition before you open anything else. A problem can be reported with that record. The seal should read R-3310.",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000b2"
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2171:31320",
+              "name": "Record card · Your return record",
+              "type": "FRAME",
+              "x": 24,
+              "y": 732,
+              "width": 342,
+              "height": 106,
+              "fill": "#ffffff",
+              "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 16,
+                "paddingRight": 16,
+                "paddingBottom": 16,
+                "paddingLeft": 16,
+                "itemSpacing": 8,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31321",
+                  "name": "Your return record",
+                  "type": "TEXT",
+                  "x": 17,
+                  "y": 17,
+                  "width": 308,
+                  "height": 24,
+                  "fill": "#000000",
+                  "characters": "Your return record",
+                  "fontSize": 16,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Bold"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 24
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "2171:31322",
+                  "name": "Not recorded yet. Take the photos and th…",
+                  "type": "TEXT",
+                  "x": 17,
+                  "y": 49,
+                  "width": 308,
+                  "height": 40,
+                  "fill": "#000000b2",
+                  "characters": "Not recorded yet. Take the photos and the video of the item as it came back.",
+                  "fontSize": 14,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Regular"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 20
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000b2"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "2171:31323",
+              "name": "Segmented · whose photos",
+              "type": "FRAME",
+              "x": 24,
+              "y": 862,
+              "width": 342,
+              "height": 44,
+              "fill": "#f2f2f2",
+              "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 4,
+                "paddingRight": 4,
+                "paddingBottom": 4,
+                "paddingLeft": 4,
+                "itemSpacing": 0,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31324",
+                  "name": "Your photos",
+                  "type": "FRAME",
+                  "x": 4,
+                  "y": 4,
+                  "width": 167,
+                  "height": 36,
+                  "fill": "#ffffff",
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "paddingTop": 8,
+                    "paddingRight": 8,
+                    "paddingBottom": 8,
+                    "paddingLeft": 8,
+                    "itemSpacing": 0,
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2171:31325",
+                      "name": "Your photos",
+                      "type": "TEXT",
+                      "x": 42.5,
+                      "y": 8,
+                      "width": 82,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Your photos",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000"
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "2171:31326",
+                  "name": "Meera's photos",
+                  "type": "FRAME",
+                  "x": 171,
+                  "y": 4,
+                  "width": 167,
+                  "height": 36,
+                  "fill": null,
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "paddingTop": 8,
+                    "paddingRight": 8,
+                    "paddingBottom": 8,
+                    "paddingLeft": 8,
+                    "itemSpacing": 0,
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "children": [
+                    {
+                      "id": "2171:31327",
+                      "name": "Meera's photos",
+                      "type": "TEXT",
+                      "x": 32,
+                      "y": 8,
+                      "width": 103,
+                      "height": 20,
+                      "fill": "#000000b2",
+                      "characters": "Meera's photos",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000b2"
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2171:31328",
+              "name": "Two sets",
+              "type": "FRAME",
+              "x": 24,
+              "y": 930,
+              "width": 342,
+              "height": 336,
+              "fill": null,
+              "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 16,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31329",
+                  "name": "Set · At handover · Tue 24",
+                  "type": "FRAME",
+                  "x": 0,
+                  "y": 0,
+                  "width": 163,
+                  "height": 336,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2171:31330",
+                      "name": "At handover · Tue 24",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 163,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "At handover · Tue 24",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000"
+                      ],
+                      "children": []
+                    },
+                    {
+                      "id": "2171:31331",
+                      "name": "Spacer",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 28,
+                      "width": 163,
+                      "height": 16,
+                      "fill": null,
+                      "children": []
+                    },
+                    {
+                      "id": "2171:31332",
+                      "name": "Tiles",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 52,
+                      "width": 163,
+                      "height": 76,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31333",
+                          "name": "Tile · Front",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31334",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": null,
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31335",
+                              "name": "Front",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Front",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31336",
+                          "name": "Tile · Back",
+                          "type": "FRAME",
+                          "x": 85.5,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31337",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": null,
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31338",
+                              "name": "Back",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Back",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31339",
+                      "name": "Tiles",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 136,
+                      "width": 163,
+                      "height": 76,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31340",
+                          "name": "Tile · Left side",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31341",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": null,
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31342",
+                              "name": "Left side",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Left side",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31343",
+                          "name": "Tile · Right side",
+                          "type": "FRAME",
+                          "x": 85.5,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31344",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": null,
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31345",
+                              "name": "Right side",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Right side",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31346",
+                      "name": "Tiles",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 220,
+                      "width": 163,
+                      "height": 92,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31347",
+                          "name": "Tile · Marks and wear",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 92,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31348",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": null,
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31349",
+                              "name": "Marks and wear",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 32,
+                              "fill": "#000000b2",
+                              "characters": "Marks and wear",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31350",
+                          "name": "Tile · Label or serial number",
+                          "type": "FRAME",
+                          "x": 85.5,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 92,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31351",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": null,
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31352",
+                              "name": "Label or serial number",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 32,
+                              "fill": "#000000b2",
+                              "characters": "Label or serial number",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31353",
+                      "name": "Video",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 320,
+                      "width": 163,
+                      "height": 16,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 6,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31354",
+                          "name": "heroicons-outline/video",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 16,
+                          "height": 16,
+                          "fill": null,
+                          "children": [
+                            {
+                              "id": "2171:31355",
+                              "name": "Vector",
+                              "type": "VECTOR",
+                              "x": 1.5,
+                              "y": 3.5,
+                              "width": 13,
+                              "height": 9,
+                              "fill": null,
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31356",
+                          "name": "Video",
+                          "type": "TEXT",
+                          "x": 22,
+                          "y": 0,
+                          "width": 35,
+                          "height": 16,
+                          "fill": "#000000",
+                          "characters": "Video",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Medium"
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            "#000000"
+                          ],
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "2171:31357",
+                  "name": "Set · Now · Tue 24",
+                  "type": "FRAME",
+                  "x": 179,
+                  "y": 0,
+                  "width": 163,
+                  "height": 336,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 8,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "2171:31358",
+                      "name": "Now · Tue 24",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 163,
+                      "height": 20,
+                      "fill": "#000000",
+                      "characters": "Now · Tue 24",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000"
+                      ],
+                      "children": []
+                    },
+                    {
+                      "id": "2171:31359",
+                      "name": "Not recorded yet",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 28,
+                      "width": 163,
+                      "height": 16,
+                      "fill": "#00000099",
+                      "characters": "Not recorded yet",
+                      "fontSize": 12,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 16
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#00000099"
+                      ],
+                      "children": []
+                    },
+                    {
+                      "id": "2171:31360",
+                      "name": "Tiles",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 52,
+                      "width": 163,
+                      "height": 76,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31361",
+                          "name": "Tile · Front",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31362",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": "#ffffff",
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31363",
+                              "name": "Front",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Front",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31364",
+                          "name": "Tile · Back",
+                          "type": "FRAME",
+                          "x": 85.5,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31365",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": "#ffffff",
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31366",
+                              "name": "Back",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Back",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31367",
+                      "name": "Tiles",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 136,
+                      "width": 163,
+                      "height": 76,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31368",
+                          "name": "Tile · Left side",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31369",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": "#ffffff",
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31370",
+                              "name": "Left side",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Left side",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31371",
+                          "name": "Tile · Right side",
+                          "type": "FRAME",
+                          "x": 85.5,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 76,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31372",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": "#ffffff",
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31373",
+                              "name": "Right side",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 16,
+                              "fill": "#000000b2",
+                              "characters": "Right side",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31374",
+                      "name": "Tiles",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 220,
+                      "width": 163,
+                      "height": 92,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 8,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "MIN"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31375",
+                          "name": "Tile · Marks and wear",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 92,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31376",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": "#ffffff",
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31377",
+                              "name": "Marks and wear",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 32,
+                              "fill": "#000000b2",
+                              "characters": "Marks and wear",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31378",
+                          "name": "Tile · Label or serial number",
+                          "type": "FRAME",
+                          "x": 85.5,
+                          "y": 0,
+                          "width": 77.5,
+                          "height": 92,
+                          "fill": null,
+                          "layout": {
+                            "mode": "VERTICAL",
+                            "paddingTop": 0,
+                            "paddingRight": 0,
+                            "paddingBottom": 0,
+                            "paddingLeft": 0,
+                            "itemSpacing": 4,
+                            "primaryAxisAlignItems": "MIN",
+                            "counterAxisAlignItems": "MIN"
+                          },
+                          "children": [
+                            {
+                              "id": "2171:31379",
+                              "name": "Photo",
+                              "type": "RECTANGLE",
+                              "x": 0,
+                              "y": 0,
+                              "width": 77.5,
+                              "height": 56,
+                              "fill": "#ffffff",
+                              "children": []
+                            },
+                            {
+                              "id": "2171:31380",
+                              "name": "Label or serial number",
+                              "type": "TEXT",
+                              "x": 0,
+                              "y": 60,
+                              "width": 77.5,
+                              "height": 32,
+                              "fill": "#000000b2",
+                              "characters": "Label or serial number",
+                              "fontSize": 12,
+                              "fontName": {
+                                "family": "Plus Jakarta Sans",
+                                "style": "Regular"
+                              },
+                              "lineHeight": {
+                                "unit": "PIXELS",
+                                "value": 16
+                              },
+                              "letterSpacing": {
+                                "unit": "PERCENT",
+                                "value": 0
+                              },
+                              "fills": [
+                                "#000000b2"
+                              ],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "2171:31381",
+                      "name": "Video",
+                      "type": "FRAME",
+                      "x": 0,
+                      "y": 320,
+                      "width": 163,
+                      "height": 16,
+                      "fill": null,
+                      "layout": {
+                        "mode": "HORIZONTAL",
+                        "paddingTop": 0,
+                        "paddingRight": 0,
+                        "paddingBottom": 0,
+                        "paddingLeft": 0,
+                        "itemSpacing": 6,
+                        "primaryAxisAlignItems": "MIN",
+                        "counterAxisAlignItems": "CENTER"
+                      },
+                      "children": [
+                        {
+                          "id": "2171:31382",
+                          "name": "heroicons-outline/video",
+                          "type": "FRAME",
+                          "x": 0,
+                          "y": 0,
+                          "width": 16,
+                          "height": 16,
+                          "fill": null,
+                          "children": [
+                            {
+                              "id": "2171:31383",
+                              "name": "Vector",
+                              "type": "VECTOR",
+                              "x": 1.5,
+                              "y": 3.5,
+                              "width": 13,
+                              "height": 9,
+                              "fill": null,
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "id": "2171:31384",
+                          "name": "Video",
+                          "type": "TEXT",
+                          "x": 22,
+                          "y": 0,
+                          "width": 35,
+                          "height": 16,
+                          "fill": "#00000099",
+                          "characters": "Video",
+                          "fontSize": 12,
+                          "fontName": {
+                            "family": "Plus Jakarta Sans",
+                            "style": "Medium"
+                          },
+                          "lineHeight": {
+                            "unit": "PIXELS",
+                            "value": 16
+                          },
+                          "letterSpacing": {
+                            "unit": "PERCENT",
+                            "value": 0
+                          },
+                          "fills": [
+                            "#00000099"
+                          ],
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2171:31385",
+              "name": "Call via Renit",
+              "type": "FRAME",
+              "x": 24,
+              "y": 1290,
+              "width": 342,
+              "height": 64,
+              "fill": null,
+              "layout": {
+                "mode": "VERTICAL",
+                "paddingTop": 0,
+                "paddingRight": 0,
+                "paddingBottom": 0,
+                "paddingLeft": 0,
+                "itemSpacing": 4,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "MIN"
+              },
+              "children": [
+                {
+                  "id": "2171:31386",
+                  "name": "Secondary button · Call via Renit",
+                  "type": "INSTANCE",
+                  "x": 0,
+                  "y": 0,
+                  "width": 342,
+                  "height": 44,
+                  "fill": "#ffffff",
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "mainComponent": {
+                    "id": "1:141",
+                    "name": "Button/Type=Secondary"
+                  },
+                  "componentProperties": {
+                    "Left Icon#309:6": {
+                      "type": "INSTANCE_SWAP",
+                      "value": "1:131"
+                    },
+                    "Right Icon#309:5": {
+                      "type": "INSTANCE_SWAP",
+                      "value": "1:129"
+                    },
+                    "Label#309:8": {
+                      "type": "TEXT",
+                      "value": "Call via Renit"
+                    },
+                    "Show Left Icon#309:4": {
+                      "type": "BOOLEAN",
+                      "value": false
+                    },
+                    "Show Right Icon#309:7": {
+                      "type": "BOOLEAN",
+                      "value": false
+                    },
+                    "Type": {
+                      "type": "VARIANT",
+                      "value": "Secondary"
+                    }
+                  },
+                  "children": [
+                    {
+                      "id": "I2171:31386;309:3551",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 128.5,
+                      "y": 12,
+                      "width": 85,
+                      "height": 20,
+                      "fill": "#635be8",
+                      "characters": "Call via Renit",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#635be8"
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "2171:31387",
+                  "name": "Renit's desk speaks to the rider and the…",
+                  "type": "TEXT",
+                  "x": 0,
+                  "y": 48,
+                  "width": 342,
+                  "height": 16,
+                  "fill": "#00000099",
+                  "characters": "Renit's desk speaks to the rider and the customer for you",
+                  "fontSize": 12,
+                  "fontName": {
+                    "family": "Plus Jakarta Sans",
+                    "style": "Regular"
+                  },
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 16
+                  },
+                  "letterSpacing": {
+                    "unit": "PERCENT",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#00000099"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "2171:31388",
+              "name": "List row · Get help",
+              "type": "INSTANCE",
+              "x": 0,
+              "y": 1378,
+              "width": 390,
+              "height": 70,
+              "fill": "#ffffff",
+              "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 12,
+                "paddingRight": 24,
+                "paddingBottom": 12,
+                "paddingLeft": 24,
+                "itemSpacing": 16,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "mainComponent": {
+                "id": "2073:14355",
+                "name": "List row/Size=Two-line"
+              },
+              "componentProperties": {
+                "Leading icon#2073:26": {
+                  "type": "INSTANCE_SWAP",
+                  "value": "1:3311"
+                },
+                "Show chevron#2073:24": {
+                  "type": "BOOLEAN",
+                  "value": true
+                },
+                "Value#2073:22": {
+                  "type": "TEXT",
+                  "value": "2"
+                },
+                "Show value#2073:23": {
+                  "type": "BOOLEAN",
+                  "value": false
+                },
+                "Show leading icon#2073:25": {
+                  "type": "BOOLEAN",
+                  "value": false
+                },
+                "Sub-line#2073:27": {
+                  "type": "TEXT",
+                  "value": "Renit's desk: Every day, 8 am to midnight"
+                },
+                "Label#2073:21": {
+                  "type": "TEXT",
+                  "value": "Get help"
+                },
+                "Size": {
+                  "type": "VARIANT",
+                  "value": "Two-line"
+                }
+              },
+              "children": [
+                {
+                  "id": "I2171:31388;2073:14358",
+                  "name": "Text",
+                  "type": "FRAME",
+                  "x": 24,
+                  "y": 12,
+                  "width": 306,
+                  "height": 46,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "I2171:31388;2073:14359",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 306,
+                      "height": 24,
+                      "fill": "#000000",
+                      "characters": "Get help",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Medium"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000"
+                      ],
+                      "children": []
+                    },
+                    {
+                      "id": "I2171:31388;2073:14360",
+                      "name": "Sub-line",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 26,
+                      "width": 306,
+                      "height": 20,
+                      "fill": "#00000099",
+                      "characters": "Renit's desk: Every day, 8 am to midnight",
+                      "fontSize": 14,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Regular"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 20
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#00000099"
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "I2171:31388;2073:14362",
+                  "name": "Chevron",
+                  "type": "INSTANCE",
+                  "x": 346,
+                  "y": 25,
+                  "width": 20,
+                  "height": 20,
+                  "fill": null,
+                  "mainComponent": {
+                    "id": "1:125",
+                    "name": "heroicons-mini/chevron-right"
+                  },
+                  "componentProperties": {},
+                  "children": [
+                    {
+                      "id": "I2171:31388;2073:14362;341:7038",
+                      "name": "Icon",
+                      "type": "VECTOR",
+                      "x": 7,
+                      "y": 15,
+                      "width": 10,
+                      "height": 6,
+                      "fill": "#00000099",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "2171:31389",
+              "name": "List row · Booking details",
+              "type": "INSTANCE",
+              "x": 0,
+              "y": 1472,
+              "width": 390,
+              "height": 56,
+              "fill": "#ffffff",
+              "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 0,
+                "paddingRight": 24,
+                "paddingBottom": 0,
+                "paddingLeft": 24,
+                "itemSpacing": 16,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "mainComponent": {
+                "id": "2073:14347",
+                "name": "List row/Size=Single"
+              },
+              "componentProperties": {
+                "Sub-line#2073:27": {
+                  "type": "TEXT",
+                  "value": "Home is your default"
+                },
+                "Leading icon#2073:26": {
+                  "type": "INSTANCE_SWAP",
+                  "value": "1:3311"
+                },
+                "Show chevron#2073:24": {
+                  "type": "BOOLEAN",
+                  "value": true
+                },
+                "Show value#2073:23": {
+                  "type": "BOOLEAN",
+                  "value": false
+                },
+                "Show leading icon#2073:25": {
+                  "type": "BOOLEAN",
+                  "value": false
+                },
+                "Value#2073:22": {
+                  "type": "TEXT",
+                  "value": "2"
+                },
+                "Label#2073:21": {
+                  "type": "TEXT",
+                  "value": "Booking details"
+                },
+                "Size": {
+                  "type": "VARIANT",
+                  "value": "Single"
+                }
+              },
+              "children": [
+                {
+                  "id": "I2171:31389;2073:14350",
+                  "name": "Text",
+                  "type": "FRAME",
+                  "x": 24,
+                  "y": 16,
+                  "width": 306,
+                  "height": 24,
+                  "fill": null,
+                  "layout": {
+                    "mode": "VERTICAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 2,
+                    "primaryAxisAlignItems": "MIN",
+                    "counterAxisAlignItems": "MIN"
+                  },
+                  "children": [
+                    {
+                      "id": "I2171:31389;2073:14351",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 0,
+                      "y": 0,
+                      "width": 306,
+                      "height": 24,
+                      "fill": "#000000",
+                      "characters": "Booking details",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "Medium"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#000000"
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "I2171:31389;2073:14353",
+                  "name": "Chevron",
+                  "type": "INSTANCE",
+                  "x": 346,
+                  "y": 18,
+                  "width": 20,
+                  "height": 20,
+                  "fill": null,
+                  "mainComponent": {
+                    "id": "1:125",
+                    "name": "heroicons-mini/chevron-right"
+                  },
+                  "componentProperties": {},
+                  "children": [
+                    {
+                      "id": "I2171:31389;2073:14353;341:7038",
+                      "name": "Icon",
+                      "type": "VECTOR",
+                      "x": 7,
+                      "y": 15,
+                      "width": 10,
+                      "height": 6,
+                      "fill": "#00000099",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2171:31390",
+          "name": "Scroll end (prototype)",
+          "type": "RECTANGLE",
+          "x": 0,
+          "y": 1729,
+          "width": 390,
+          "height": 1,
+          "fill": null,
+          "children": []
+        },
+        {
+          "id": "2171:31391",
+          "name": "Status Bar",
+          "type": "FRAME",
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 54,
+          "fill": "#ffffff",
+          "children": [
+            {
+              "id": "2171:31392",
+              "name": "Time",
+              "type": "FRAME",
+              "x": 0,
+              "y": 0,
+              "width": 136.95,
+              "height": 54,
+              "fill": null,
+              "children": [
+                {
+                  "id": "2171:31393",
+                  "name": "Time",
+                  "type": "TEXT",
+                  "x": 50.61,
+                  "y": 18.34,
+                  "width": 37,
+                  "height": 22,
+                  "fill": "#000000",
+                  "characters": "9:41",
+                  "fontSize": 17,
+                  "fontName": "mixed",
+                  "lineHeight": {
+                    "unit": "PIXELS",
+                    "value": 22
+                  },
+                  "letterSpacing": {
+                    "unit": "PIXELS",
+                    "value": 0
+                  },
+                  "fills": [
+                    "#000000"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "2171:31394",
+              "name": "Levels",
+              "type": "FRAME",
+              "x": 248.09,
+              "y": 0,
+              "width": 141.91,
+              "height": 54,
+              "fill": null,
+              "children": [
+                {
+                  "id": "2171:31395",
+                  "name": "Battery",
+                  "type": "GROUP",
+                  "x": 82,
+                  "y": 23,
+                  "width": 27.33,
+                  "height": 13,
+                  "fill": null,
+                  "children": [
+                    {
+                      "id": "2171:31396",
+                      "name": "Border",
+                      "type": "RECTANGLE",
+                      "x": 82,
+                      "y": 23,
+                      "width": 25,
+                      "height": 13,
+                      "fill": null,
+                      "children": []
+                    },
+                    {
+                      "id": "2171:31397",
+                      "name": "Cap",
+                      "type": "VECTOR",
+                      "x": 108,
+                      "y": 27.78,
+                      "width": 1.33,
+                      "height": 4.08,
+                      "fill": "#000000",
+                      "children": []
+                    },
+                    {
+                      "id": "2171:31398",
+                      "name": "Capacity",
+                      "type": "RECTANGLE",
+                      "x": 84,
+                      "y": 25,
+                      "width": 21,
+                      "height": 9,
+                      "fill": "#000000",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "id": "2171:31399",
+                  "name": "Wifi",
+                  "type": "VECTOR",
+                  "x": 57.7,
+                  "y": 23.64,
+                  "width": 17.14,
+                  "height": 12.33,
+                  "fill": "#000000",
+                  "children": []
+                },
+                {
+                  "id": "2171:31400",
+                  "name": "Cellular Connection",
+                  "type": "VECTOR",
+                  "x": 31,
+                  "y": 23.54,
+                  "width": 19.2,
+                  "height": 12.23,
+                  "fill": "#000000",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2171:31401",
+          "name": "Top bar",
+          "type": "INSTANCE",
+          "x": 0,
+          "y": 54,
+          "width": 390,
+          "height": 56,
+          "fill": "#ffffff",
+          "layout": {
+            "mode": "HORIZONTAL",
+            "paddingTop": 0,
+            "paddingRight": 16,
+            "paddingBottom": 0,
+            "paddingLeft": 16,
+            "itemSpacing": 12,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "CENTER"
+          },
+          "mainComponent": {
+            "id": "2071:14397",
+            "name": "Top bar/Type=Back+Title"
+          },
+          "componentProperties": {
+            "Show trailing#2071:5": {
+              "type": "BOOLEAN",
+              "value": false
+            },
+            "Title#2071:4": {
+              "type": "TEXT",
+              "value": "Return"
+            },
+            "Type": {
+              "type": "VARIANT",
+              "value": "Back+Title"
+            }
+          },
+          "children": [
+            {
+              "id": "I2171:31401;2071:14398",
+              "name": "Back",
+              "type": "INSTANCE",
+              "x": 16,
+              "y": 6,
+              "width": 44,
+              "height": 44,
+              "fill": null,
+              "mainComponent": {
+                "id": "1:17",
+                "name": "Icon Button/Type=Regular"
+              },
+              "componentProperties": {
+                "Icon#602:12": {
+                  "type": "INSTANCE_SWAP",
+                  "value": "1:7"
+                },
+                "Type": {
+                  "type": "VARIANT",
+                  "value": "Regular"
+                }
+              },
+              "children": [
+                {
+                  "id": "I2171:31401;2071:14398;602:8477",
+                  "name": "heroicons-outline/arrow-left",
+                  "type": "INSTANCE",
+                  "x": 10,
+                  "y": 10,
+                  "width": 24,
+                  "height": 24,
+                  "fill": null,
+                  "mainComponent": {
+                    "id": "1:7",
+                    "name": "heroicons-outline/arrow-left"
+                  },
+                  "componentProperties": {},
+                  "children": [
+                    {
+                      "id": "I2171:31401;2071:14398;602:8477;341:6186",
+                      "name": "Icon",
+                      "type": "VECTOR",
+                      "x": 3,
+                      "y": 4.5,
+                      "width": 18,
+                      "height": 15,
+                      "fill": null,
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "I2171:31401;2071:14402",
+              "name": "Title",
+              "type": "TEXT",
+              "x": 72,
+              "y": 16,
+              "width": 302,
+              "height": 24,
+              "fill": "#000000",
+              "characters": "Return",
+              "fontSize": 18,
+              "fontName": {
+                "family": "Plus Jakarta Sans",
+                "style": "Bold"
+              },
+              "lineHeight": {
+                "unit": "PIXELS",
+                "value": 24
+              },
+              "letterSpacing": {
+                "unit": "PERCENT",
+                "value": 0
+              },
+              "fills": [
+                "#000000"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "2171:31402",
+          "name": "NEW · sticky bar (record card button lifted from the body)",
+          "type": "INSTANCE",
+          "x": 0,
+          "y": 738,
+          "width": 390,
+          "height": 106,
+          "fill": "#ffffff",
+          "layout": {
+            "mode": "VERTICAL",
+            "paddingTop": 0,
+            "paddingRight": 0,
+            "paddingBottom": 0,
+            "paddingLeft": 0,
+            "itemSpacing": 0,
+            "primaryAxisAlignItems": "MIN",
+            "counterAxisAlignItems": "MIN"
+          },
+          "mainComponent": {
+            "id": "2071:14439",
+            "name": "Bottom bar/Layout=Full CTA"
+          },
+          "componentProperties": {
+            "Sub-line#2071:14": {
+              "type": "TEXT",
+              "value": "Deposit ₹2,000"
+            },
+            "Unit#2071:13": {
+              "type": "TEXT",
+              "value": "/day"
+            },
+            "Show sub-line#2071:15": {
+              "type": "BOOLEAN",
+              "value": true
+            },
+            "Value#2071:12": {
+              "type": "TEXT",
+              "value": "₹1,200"
+            },
+            "Layout": {
+              "type": "VARIANT",
+              "value": "Full CTA"
+            }
+          },
+          "children": [
+            {
+              "id": "I2171:31402;2071:14440",
+              "name": "Content",
+              "type": "FRAME",
+              "x": 0,
+              "y": 1,
+              "width": 390,
+              "height": 84,
+              "fill": null,
+              "layout": {
+                "mode": "HORIZONTAL",
+                "paddingTop": 16,
+                "paddingRight": 24,
+                "paddingBottom": 16,
+                "paddingLeft": 24,
+                "itemSpacing": 12,
+                "primaryAxisAlignItems": "MIN",
+                "counterAxisAlignItems": "CENTER"
+              },
+              "children": [
+                {
+                  "id": "I2171:31402;2071:14441",
+                  "name": "Primary button",
+                  "type": "INSTANCE",
+                  "x": 24,
+                  "y": 16,
+                  "width": 342,
+                  "height": 52,
+                  "fill": "#635be8",
+                  "layout": {
+                    "mode": "HORIZONTAL",
+                    "paddingTop": 0,
+                    "paddingRight": 0,
+                    "paddingBottom": 0,
+                    "paddingLeft": 0,
+                    "itemSpacing": 4,
+                    "primaryAxisAlignItems": "CENTER",
+                    "counterAxisAlignItems": "CENTER"
+                  },
+                  "mainComponent": {
+                    "id": "1:137",
+                    "name": "Button/Type=Primary"
+                  },
+                  "componentProperties": {
+                    "Left Icon#309:6": {
+                      "type": "INSTANCE_SWAP",
+                      "value": "1:131"
+                    },
+                    "Right Icon#309:5": {
+                      "type": "INSTANCE_SWAP",
+                      "value": "1:129"
+                    },
+                    "Label#309:8": {
+                      "type": "TEXT",
+                      "value": "Record its condition"
+                    },
+                    "Show Left Icon#309:4": {
+                      "type": "BOOLEAN",
+                      "value": false
+                    },
+                    "Show Right Icon#309:7": {
+                      "type": "BOOLEAN",
+                      "value": false
+                    },
+                    "Type": {
+                      "type": "VARIANT",
+                      "value": "Primary"
+                    }
+                  },
+                  "children": [
+                    {
+                      "id": "I2171:31402;2071:14441;309:676",
+                      "name": "Label",
+                      "type": "TEXT",
+                      "x": 93,
+                      "y": 14,
+                      "width": 156,
+                      "height": 24,
+                      "fill": "#ffffff",
+                      "characters": "Record its condition",
+                      "fontSize": 16,
+                      "fontName": {
+                        "family": "Plus Jakarta Sans",
+                        "style": "SemiBold"
+                      },
+                      "lineHeight": {
+                        "unit": "PIXELS",
+                        "value": 24
+                      },
+                      "letterSpacing": {
+                        "unit": "PERCENT",
+                        "value": 0
+                      },
+                      "fills": [
+                        "#ffffff"
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "I2171:31402;2071:14447",
+              "name": "Home Indicator",
+              "type": "FRAME",
+              "x": 0,
+              "y": 85,
+              "width": 390,
+              "height": 21,
+              "fill": null,
+              "children": [
+                {
+                  "id": "I2171:31402;2071:14448",
+                  "name": "Home Indicator",
+                  "type": "RECTANGLE",
+                  "x": 128,
+                  "y": 8,
+                  "width": 134,
+                  "height": 5,
+                  "fill": "#000000",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
