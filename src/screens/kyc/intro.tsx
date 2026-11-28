@@ -34,7 +34,7 @@ const STEPS = ["Enter your details", "Confirm with DigiLocker", "Our team review
 // A person's ID check (ENG-351): their own PAN and Aadhaar, nothing about a business.
 const PERSON = {
   header: "Check your ID",
-  title: "Check your ID once",
+  title: "Check your ID",
   // ENG-446: a check lasts KYC_VALID_MONTHS (12); `valid_months` from the status words it when known.
   body: (months: number) =>
     `Renit checks your ID before you rent some higher-value items. A check stays valid for ${months} months.`,

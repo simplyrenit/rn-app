@@ -118,8 +118,8 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
       }
       return {
         ...business,
-        cardTitle: "Check your ID",
-        cardBody: `Takes a few minutes, and stays valid for ${months} months.`,
+        cardTitle: "KYC not done yet",
+        cardBody: `Verify once. It stays valid for ${months} months.`,
         title: "Check your ID",
         body: `Renit asks for an ID check when you book items that need one. It stays valid for ${months} months.`,
         cta: "Start ID check",

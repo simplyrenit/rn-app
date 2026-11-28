@@ -2,7 +2,7 @@ import { useKycBadgeSync, useKycStatus } from "@/backend/kyc";
 import { Button, Skeleton, Text } from "@/components/core";
 import { useGlobalContext } from "@/context/global-context";
 import { MIN_TOUCH_TARGET, space } from "@/lib/design-tokens";
-import { hasVerificationData, kycStateCopy, kycValidity } from "@/lib/kyc";
+import { hasVerificationData, kycChecks, kycStateCopy, kycValidity } from "@/lib/kyc";
 import { useTypedNavigation } from "@/lib/types";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
@@ -45,7 +45,9 @@ export function KycCard({ isDark }: { isDark: boolean }) {
   // Nothing on file starts at the explanation, and so does Re-verify. Anyone else sees where it
   // stands, which is also where a timed-out verification's data can be removed.
   const open = () =>
-    reverify || !hasVerificationData(data)
+    reverify
+      ? navigation.navigate("KycIntro", { source: "reverify" })
+      : !hasVerificationData(data)
       ? navigation.navigate("KycIntro", { source: "profile" })
       : navigation.navigate("KycStatus");
   const dates = validity
@@ -53,9 +55,12 @@ export function KycCard({ isDark }: { isDark: boolean }) {
         .filter(Boolean)
         .join(" · ")
     : null;
-  const warning = validity?.soon
-    ? `Expires in ${validity.daysLeft} ${validity.daysLeft === 1 ? "day" : "days"}. Re-verify now; your current check stays valid until the new one is decided.`
-    : null;
+  // A re-verification already open (can_reverify false) is told where it stands by the copy, not
+  // asked to re-verify again.
+  const warning =
+    validity?.soon && reverify
+      ? `Expires in ${validity.daysLeft} ${validity.daysLeft === 1 ? "day" : "days"}. Re-verify now; your current check stays valid until the new one is decided.`
+      : null;
 
   return (
     <View className="px-gutter">
@@ -83,6 +88,13 @@ export function KycCard({ isDark }: { isDark: boolean }) {
               {dates}
             </Text>
           ) : null}
+          {validity
+            ? kycChecks(data, person).map((check) => (
+                <Text key={check} tone="dim" fontSize="text-sm" accessibilityLabel={`${check} checked`}>
+                  ✓ {check}
+                </Text>
+              ))
+            : null}
           {warning ? (
             <Text tone="warning" fontSize="text-sm">
               {warning}

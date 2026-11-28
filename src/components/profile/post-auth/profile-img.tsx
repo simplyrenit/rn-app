@@ -30,7 +30,9 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
   const { color } = useTheme();
   const loading = !userDetails;
   // ENG-446: the person's own "KYC verified" badge, while their check is in force.
-  const verified = kycVerified(useKycStatus().data);
+  // A business keeps its own Verified business badge.
+  const kyc = useKycStatus().data;
+  const verified = userDetails?.account_type !== "merchant" && kycVerified(kyc);
 
   // The status card and the Post gate read the context's copy, so Profile refreshes that one.
   useRefreshDetailsOnFocus();

@@ -361,7 +361,8 @@ export type RootStackParamList = {
   ListSubmitted: { productName: string; coverUrl?: string | null; status?: string | null; reasons?: FlagReason[]; waitsText?: string | null };
   // Merchant verification (ENG-12). Params are flags only: a PAN or GSTIN never goes in one.
   // `source: "booking"`: the customer's ID check, opened from the price screen (ENG-351); the way out is back to it.
-  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking"; supersede?: boolean } | undefined;
+  // `source: "reverify"`: renewing a check about to expire (ENG-446).
+  KycIntro: { source?: "profile" | "post_listing" | "push" | "booking" | "reverify"; supersede?: boolean } | undefined;
   KycDetails: { supersede?: boolean; source?: "booking" } | undefined;
   KycStatus: { justReturned?: boolean; source?: "booking" } | undefined;
   OwnersProducts: { products: BackendProduct[]; name: string; shopUrl?: string | null };

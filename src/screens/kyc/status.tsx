@@ -349,7 +349,15 @@ export default function KycStatusScreen() {
           </View>
         ) : null}
 
-        {data.can_reverify ? <Button onPress={() => openIntro()}>Re-verify</Button> : null}
+        {data.can_reverify ? (
+          <Button
+            onPress={() =>
+              fromBooking ? openIntro() : navigation.navigate("KycIntro", { source: "reverify" })
+            }
+          >
+            Re-verify
+          </Button>
+        ) : null}
 
         {step !== null ? (
           <View style={{ gap: space.sm }}>

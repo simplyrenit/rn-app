@@ -250,6 +250,7 @@ describe("KYC validity (ENG-446)", () => {
     expect(kycValidity(far, now)).toEqual({ verifiedOn: "21 Oct 2026", validUntil: "21 Nov 2027", daysLeft: 52, soon: false });
     const near = status({ valid_until: "2027-10-31T00:00:00Z" });
     expect(kycValidity(near, now)).toMatchObject({ daysLeft: 30, soon: true, verifiedOn: null });
+    expect(kycValidity(status({ valid_until: "2027-11-01T00:00:00Z" }), now)).toMatchObject({ daysLeft: 31, soon: false });
     expect(kycValidity(status({ valid_until: "2027-10-01T00:00:01Z" }), now)?.daysLeft).toBe(1);
     // Nothing in force: nothing yet, expired (the server sends null), or an older API (absent).
     expect(kycValidity(status({ valid_until: null }), now)).toBeNull();
