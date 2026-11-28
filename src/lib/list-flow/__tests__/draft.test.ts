@@ -714,3 +714,33 @@ describe("quantity and worth (ENG-155)", () => {
     expect(isDraftWorthResuming(apply(fresh(), { type: "editField", field: "worth", value: "100" }))).toBe(true);
   });
 });
+
+describe("what comes with it (ENG-454)", () => {
+  const ps5 = { id: 42, parent: "Gaming", title: "Consoles" };
+  const items = { included_items: ["Console", "2 controllers"], handover_only_items: ["Batteries"] };
+  const setItems: DraftAction = { type: "setItems", value: items };
+
+  it("goes when the owner picks another sub-category, and stays when the same one is picked again", () => {
+    const d = apply(fresh(), { type: "editField", field: "category", value: ps5 }, setItems);
+    expect(d.items).toEqual(items);
+    expect(apply(d, { type: "editField", field: "category", value: ps5 }).items).toEqual(items);
+    expect(apply(d, { type: "editField", field: "title", value: "PS5" }).items).toEqual(items);
+    const camera = apply(d, { type: "editField", field: "category", value: { id: 9, parent: "Photo", title: "Cameras" } });
+    expect(camera.items).toBeNull();
+  });
+
+  it("goes when a run names another sub-category, not when the owner confirms the model's", () => {
+    const ai = { parent: "Gaming", title: "Consoles" };
+    let d = apply(fresh(), filled("category", ai), setItems);
+    // Picking the model's category from the sheet only adds the id.
+    d = apply(d, { type: "editField", field: "category", value: { id: 42, ...ai } });
+    expect(d.items).toEqual(items);
+    // A run on changed photos clears the model's category, and the new run names another one.
+    d = apply(d, { type: "runStarted" }, { type: "serverRunCounted", clearStaleAi: true });
+    expect(d.items).toBeNull();
+    d = apply(d, setItems, filled("category", { parent: "Photo", title: "Cameras" }));
+    expect(d.fields.category.value).toEqual({ parent: "Photo", title: "Cameras" });
+    expect(d.items).toBeNull();
+  });
+});
+

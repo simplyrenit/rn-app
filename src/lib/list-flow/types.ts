@@ -214,7 +214,8 @@ export interface ListingDraft {
   notDelivered?: boolean;
   /**
    * ENG-454: what comes with it, as the listing's own lists. Absent or null while the owner has left the category's
-   * list as it is: then nothing is sent, and the listing follows its category's list (a new category's too).
+   * list as it is: then nothing is sent, and the listing follows its category's list. Dropped when the sub-category
+   * changes, so Review shows the new one's defaults.
    */
   items?: ListingItems | null;
 }

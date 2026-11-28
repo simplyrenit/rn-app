@@ -401,11 +401,26 @@ export function draftReducer(
   draft: ListingDraft | null,
   action: DraftAction
 ): ListingDraft | null {
-  const next = reduce(draft, action);
+  const reduced = reduce(draft, action);
   // A worth typed, suggested or cleared moves the deposit default (ENG-349).
-  return next && draft && action.type !== "reset" && next.fields.worth.value !== draft.fields.worth.value
-    ? withDerivedDeposit(next)
-    : next;
+  const next =
+    reduced && draft && action.type !== "reset" && reduced.fields.worth.value !== draft.fields.worth.value
+      ? withDerivedDeposit(reduced)
+      : reduced;
+  return next && draft && action.type !== "reset" ? withoutStaleItems(draft, next) : next;
+}
+
+/**
+ * What comes with it belongs to one sub-category (ENG-454): another one's choices would show as custom items over the
+ * new category's list, its standard items unticked. So whatever changes the sub-category (the owner's pick, a run that
+ * names another one, or a changed-photos run clearing the model's) drops them, and Review shows the new one's defaults.
+ * Picking the category the model named (which only adds the id) is not a change.
+ */
+function withoutStaleItems(before: ListingDraft, next: ListingDraft): ListingDraft {
+  if (!next.items) return next;
+  const a = before.fields.category.value;
+  const b = next.fields.category.value;
+  return (a === null && b === null) || sameCategory(a, b) ? next : { ...next, items: null };
 }
 
 function reduce(draft: ListingDraft | null, action: DraftAction): ListingDraft | null {
