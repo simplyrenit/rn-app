@@ -1520,8 +1520,9 @@ export function setView(
   list: Pick<ShotList, "shots" | "video_required"> | null | undefined
 ): SetView {
   const shots = list?.shots ?? draft?.list.shots ?? capture?.shots ?? [];
-  // No list asks for a video and none was taken: no empty "not recorded yet" tile for it.
-  const asked = videoRequired(list ?? draft?.list);
+  // No list asks for a video and none was taken: no empty "not recorded yet" tile for it. A finished record with no
+  // video didn't need one, even when the list couldn't be read.
+  const asked = capture?.complete && !capture.video ? false : videoRequired(list ?? draft?.list);
   if (capture) {
     return {
       state: capture.complete ? "in" : "partial",

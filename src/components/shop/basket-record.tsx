@@ -184,7 +184,8 @@ function ItemCard({
  * (T11), both of the shop's phones' shots as the server has them, the one video, the ID tick once for the visit, and
  * at the return a Received tick per item (D51). What the code still waits for is listed with its own way on: send
  * again, take the shot, tick. The photos are sent as they go up (`partialDue`), so the code opens once every item's
- * shots are in, while the video may still be uploading (D19). With no list on the phone and no connection a basket
+ * shots are in, while the video may still be uploading (D19). A basket that needs no video sends its record once, when
+ * it is finished, so a second phone sees nothing of it until then. With no list on the phone and no connection a basket
  * can't be started: its keys name each item, so Renit's general list won't do ("Connect to start").
  */
 export function BasketRecord({

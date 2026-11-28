@@ -708,8 +708,8 @@ export function returnSteps(booking: Pick<BookingCustomer, "captures" | "stage">
       sub: mine
         ? "Done"
         : returned
-          ? "Not recorded. You have no photos or video of how you returned it."
-          : "The same photos and video as at the handover",
+          ? "Not recorded. You have no record of how you returned it."
+          : "The same record as at the handover",
     },
     {
       label: "The shop checks it against the handover",
