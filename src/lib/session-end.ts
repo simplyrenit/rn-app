@@ -35,4 +35,4 @@ export function shouldGoToWelcome(
 }
 
 // DevFixture (dev builds) ends a design fixture's signed-in session on a signed-out device and resets the stack itself.
-const SIGNED_OUT_SCREENS = new Set(["Welcome", "Email", "Phone", "Verify", "About", "Password", "ConfirmPassword", "Location", "DevFixture"]);
+const SIGNED_OUT_SCREENS = new Set(["Welcome", "Email", "Verify", "YourName", "DevFixture"]);

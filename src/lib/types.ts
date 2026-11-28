@@ -206,15 +206,15 @@ export type RootStackParamList = {
   Home: undefined;
 
   Settings: undefined;
-  ConfirmPassword: { enteredPassword: string };
   UserDetail: { id: string };
   ChatDetails: { id: string };
   Verify: {
     email?: string;
     phone?: string;
-    verificationType: "otp" | "password" | "phone";
+    verificationType: "otp" | "phone";
   };
-  Phone: undefined;
+  /** The name step (02b): `username` and a provider's name when Google or Apple signed in without one. */
+  YourName: { username?: string; firstName?: string; lastName?: string } | undefined;
   ProductDetail: {
     id: string;
     isFavorite?: boolean;
@@ -261,14 +261,12 @@ export type RootStackParamList = {
       last_name: string;
     };
   };
-  Welcome: undefined;
+  /** The sign-in screen; `focusPhone` when the tab panel's "Continue with mobile number" opened it. */
+  Welcome: { focusPhone?: boolean } | undefined;
   MainTabs: {
     screen?: "Home" | "Saved" | "Post" | "Rentals" | "Chat" | "Profile";
   } | undefined;
   Email: undefined;
-  About: undefined;
-  Password: undefined;
-  Location: undefined;
   Privacy: undefined;
   Terms: undefined;
   Search:

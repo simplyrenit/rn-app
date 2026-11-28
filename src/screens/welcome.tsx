@@ -1,142 +1,140 @@
+import { SignUpError, useAuth } from "@/backend/auth";
 import { LoginOptions, TermsAndPolicy } from "@/components/auth";
-import { NonScrollableContainer, Text } from "@/components/core";
-import { useGlobalContext } from "@/context/global-context";
-import { useRoute } from "@react-navigation/native";
-import { Image } from "expo-image";
-import React, { useState } from "react";
-import { View, useWindowDimensions } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Carousel from "pinar";
-import { CarouselItem } from "../lib/types";
+import { INDIA, PhoneCountry, PhoneField, toE164 } from "@/components/auth/phone-field";
+import { Button, NonScrollableContainer, Text } from "@/components/core";
 import { SCREEN_GUTTER } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
+import { RouteProps, useTypedNavigation } from "@/lib/types";
+import { useRoute } from "@react-navigation/native";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useCallback, useState } from "react";
+import { ScrollView, View } from "react-native";
 
-const carouselData: CarouselItem[] = [
-  {
-    title: "Rent anything",
-    description: "Rent in or rent out just about anything you desire!",
-    lightImage: require("../../assets/auth/rent-anything-light.png"),
-    darkImage: require("../../assets/auth/rent-anything-dark.png"),
-  },
-  {
-    title: "Rent anywhere",
-    description:
-      "We connect you with what you desire and is right under your nose!",
-    lightImage: require("../../assets/auth/rent-anywhere-light.png"),
-    darkImage: require("../../assets/auth/rent-anywhere-dark.png"),
-  },
-  {
-    title: "Rent anytime",
-    description:
-      "Book in a few taps, then pick it up or get it delivered to your door.",
-    lightImage: require("../../assets/auth/rent-anytime-light.png"),
-    darkImage: require("../../assets/auth/rent-anytime-dark.png"),
-  },
-];
-
-// 02 Welcome (2089:15349 / 15444 / 15529), in pt under the status bar. The slide is
-// top-aligned: art 8 down, at most 390×326 (the light PNGs are that node at 3x), then the
-// 20/28 title 8 below, the 16/24 body 8 below that. The dots (8, 4 apart) and the sign-in
-// block are bottom-anchored: dots 44 above the providers, the block ending 30 above the
-// screen's bottom edge (844 − 814), into the home-indicator strip as the frame draws it.
-// Kept on review (not max(30, insets.bottom)): the 34pt iOS inset would move the block 4pt off the
-// frame; Android here is not edge-to-edge, so its nav bar cannot cover the Terms links.
-// The art sizes are maximums: on a 667pt SE or at a large font the art shrinks instead.
+// 02b sign-in (2179:31785), in pt under the status bar. One screen for signing up and signing in: the server makes
+// the account on the first confirmed code, so there is nothing to choose between. The art is the "Rent anything"
+// illustration cut to its top 202 (logo and first listing card) with a 48 fade into the canvas; the title block sits
+// 24 above the sign-in block, which ends 30 above the screen's bottom edge as on the 02 Welcome frame.
+// The art gives up its height first: on a short screen, a large font or with the keyboard up it shrinks to nothing,
+// then the whole screen scrolls, so the number field and Continue are never under the keyboard.
 const ART_TOP = 8;
-const ART_HEIGHT = 326;
-const TEXT_GAP = 8;
-const DOT = 8;
-const DOT_GAP = 4;
-const DOTS_TO_BUTTONS = 44;
+const ART_MAX = 202;
+const ART_IMAGE = 326;
+const FADE = 48;
+const TITLE_GAP = 8;
+const TITLE_TO_BLOCK = 24;
+const BLOCK_GAP = 16;
 const BOTTOM = 30;
 
-type WelcomeDesign = { slide: number };
+/** Dev-only design seed: only DevFixture passes it. */
+type SignInDesign = { phone?: string; error?: string };
 
-export default function OnboardingScreen(): JSX.Element {
-  const { theme } = useGlobalContext();
-  const { color } = useTheme();
-  const isDarkMode = theme === "dark";
-  // Dev-only design seed (ENG-428 plan §1): fixes the slide and stops autoplay for a frame diff.
-  const route = useRoute();
-  const design = __DEV__ ? (route.params as { design?: WelcomeDesign } | undefined)?.design : undefined;
-  const [currentIndex, setCurrentIndex] = useState(design?.slide ?? 0);
-  // Read per render, not once at module load: a frozen launch-time width left
-  // the slides the wrong size after a split-screen or display-size change.
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  // The carousel is sized to whatever vertical space is left once the dots, login
-  // buttons and terms have taken theirs, rather than a fixed share of the screen
-  // that overflowed onto the buttons on shorter devices.
-  const [carouselHeight, setCarouselHeight] = useState(
-    Math.round(windowHeight * 0.55)
-  );
+export default function SignInScreen(): JSX.Element {
+  const { color, isDark } = useTheme();
+  const router = useTypedNavigation();
+  const route = useRoute<RouteProps<"Welcome">>();
+  const design = __DEV__ ? (route.params as { design?: SignInDesign } | undefined)?.design : undefined;
+  const { sendPhoneOTP, loading } = useAuth();
+
+  const [country, setCountry] = useState<PhoneCountry>(INDIA);
+  const [phone, setPhone] = useState(design?.phone ?? "");
+  const [error, setError] = useState(design?.error ?? "");
+  const [viewport, setViewport] = useState(0);
+  const [content, setContent] = useState(0);
+  const art = viewport && content ? Math.max(0, Math.min(ART_MAX, viewport - content - ART_TOP)) : ART_MAX;
+
+  const handleContinue = useCallback(async () => {
+    // A design seed never sends an SMS.
+    if (design) return;
+    const e164 = toE164(country, phone);
+    if (!e164) {
+      setError(country.cca2 === "IN" ? "Enter your 10-digit mobile number." : "Enter a valid mobile number.");
+      return;
+    }
+    setError("");
+    try {
+      await sendPhoneOTP(e164);
+      router.navigate("Verify", { phone: e164, verificationType: "phone" });
+    } catch (requestError: any) {
+      setError((requestError as SignUpError).message || "We couldn't send a code. Try again.");
+    }
+  }, [country, design, phone, router, sendPhoneOTP]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <NonScrollableContainer>
-        <View
-          style={{ flex: 1, overflow: "hidden" }}
-          onLayout={(e) => {
-            const h = Math.round(e.nativeEvent.layout.height);
-            if (h > 0 && h !== carouselHeight) setCarouselHeight(h);
-          }}
-        >
-          <Carousel
-            loop
-            index={design?.slide ?? 0}
-            autoplay={!design}
-            height={carouselHeight}
-            width={windowWidth}
-            showsDots={false}
-            autoplayInterval={3000}
-            renderPrev={() => <></>}
-            renderNext={() => <></>}
-            onIndexChanged={(params) => setCurrentIndex(params.index)}
-          >
-            {carouselData.map((item, index) => (
-              <View
-                key={index}
-                style={{ height: carouselHeight, width: "100%", paddingTop: ART_TOP }}
-              >
-                <Image
-                  source={isDarkMode ? item.darkImage : item.lightImage}
-                  // Shrinks rather than overflows, so the title and copy always fit.
-                  style={{ width: "100%", height: ART_HEIGHT, flexShrink: 1 }}
-                  contentFit="contain"
-                />
-                <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingTop: TEXT_GAP, gap: TEXT_GAP }}>
-                  <Text fontSize="text-lg" fontWeight="font-bold" lineHeight={28} style={{ textAlign: "center" }}>
-                    {item.title}
-                  </Text>
-                  <Text fontSize="text-md" lineHeight={24} tone="body" style={{ textAlign: "center" }}>
-                    {item.description}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </Carousel>
-        </View>
-
-        <View
-          style={{ flexDirection: "row", justifyContent: "center", gap: DOT_GAP, marginBottom: DOTS_TO_BUTTONS }}
-        >
-          {carouselData.map((_, index) => (
-            <View
-              key={index}
-              style={{
-                width: DOT,
-                height: DOT,
-                borderRadius: DOT / 2,
-                backgroundColor: index === currentIndex ? color.brand : color.line,
-              }}
+    <NonScrollableContainer>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={{ backgroundColor: color.canvas }}
+        onLayout={(e) => setViewport(Math.round(e.nativeEvent.layout.height))}
+      >
+        {art > 0 && (
+          <View style={{ marginTop: ART_TOP, height: art, overflow: "hidden" }}>
+            <Image
+              source={
+                isDark
+                  ? require("../../assets/auth/rent-anything-dark.png")
+                  : require("../../assets/auth/rent-anything-light.png")
+              }
+              style={{ width: "100%", height: ART_IMAGE }}
+              contentFit="contain"
+              contentPosition="top"
             />
-          ))}
-        </View>
+            <LinearGradient
+              pointerEvents="none"
+              colors={[`${color.canvas}00`, color.canvas]}
+              style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: FADE }}
+            />
+          </View>
+        )}
 
-        <View style={{ paddingHorizontal: SCREEN_GUTTER, paddingBottom: BOTTOM, gap: 16 }}>
-          <LoginOptions isDarkMode={isDarkMode} />
-          <TermsAndPolicy />
+        <View
+          style={{ flexGrow: 1, justifyContent: "flex-end", paddingHorizontal: SCREEN_GUTTER, paddingBottom: BOTTOM }}
+        >
+          <View onLayout={(e) => setContent(Math.round(e.nativeEvent.layout.height) + BOTTOM)}>
+            <View style={{ gap: TITLE_GAP, marginBottom: TITLE_TO_BLOCK }}>
+              <Text fontSize="text-lg" fontWeight="font-bold" lineHeight={28} style={{ textAlign: "center" }}>
+                Rent anything nearby
+              </Text>
+              <Text fontSize="text-md" lineHeight={24} tone="body" style={{ textAlign: "center" }}>
+                Sign in or create an account
+              </Text>
+            </View>
+
+            <View style={{ gap: BLOCK_GAP }}>
+              <PhoneField
+                country={country}
+                onCountryChange={(next) => {
+                  setCountry(next);
+                  setError("");
+                }}
+                value={phone}
+                onChangeText={(value) => {
+                  setPhone(value);
+                  setError("");
+                }}
+                error={error || undefined}
+                autoFocus={Boolean(route.params?.focusPhone)}
+                onSubmitEditing={handleContinue}
+              />
+              <Button onPress={handleContinue} loading={loading} disabled={!phone.trim() || loading}>
+                Continue
+              </Button>
+
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                <View style={{ flex: 1, height: 1, backgroundColor: color.line }} />
+                <Text fontSize="text-xs" lineHeight={16} tone="dim">
+                  or
+                </Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: color.line }} />
+              </View>
+
+              <LoginOptions />
+              <TermsAndPolicy />
+            </View>
+          </View>
         </View>
-      </NonScrollableContainer>
-    </GestureHandlerRootView>
+      </ScrollView>
+    </NonScrollableContainer>
   );
 }

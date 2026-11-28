@@ -435,3 +435,7 @@ frameId	section	frameName	inventoryId	route	state	check
 2168:31313	10	list-review · what comes with it, list error	list-review	ListReview	what comes with it, list error	fixture
 2168:31492	11	edit-product · what comes with it	edit-product	editProduct	what comes with it	fixture
 2168:31577	11	edit-included-items · default (full scroll)	edit-included-items	EditIncludedItems	default (full scroll)	fixture
+2179:31785	02b	sign-in · NEW (phone first, one screen for sign-up + login)	sign-in	Welcome	default	fixture
+2179:31895	02b	email · NEW (code only, no password)	email	Email	filled	fixture
+2179:31931	02b	verify · NEW (same screen for phone + email)	verify	Verify	phone code, resend countdown	fixture
+2179:31979	02b	your-name · NEW (only when the account has no name)	your-name	YourName	filled	fixture
