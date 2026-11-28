@@ -123,6 +123,9 @@ export const GET_FAVORITES = SERVERURL + "favorites/";
 
 export const GET_CATEGORIES = SERVERURL + "category/";
 
+/** ENG-451: what a shop is offered when it says what comes with a listing of this sub-category (public). */
+export const categoryChecklistUrl = (id: number) => `${GET_CATEGORIES}${id}/checklist/`;
+
 export const OTP = SERVERURL + "otp/";
 
 export const SIGN_UP = SERVERURL + "signup/";
