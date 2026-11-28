@@ -83,7 +83,9 @@ export default function KycDetailsScreen() {
   const { userDetails } = useGlobalContext();
   const start = useStartKyc();
   const supersede = route.params?.supersede === true;
-  const fromBooking = route.params?.source === "booking";
+  // A price screen or a listing (ENG-449) under the check: the status screen returns to it.
+  const from = route.params?.source;
+  const fromBooking = from !== undefined;
   const person = userDetails?.account_type !== "merchant";
 
   const [pan, setPan] = useState("");
@@ -129,7 +131,7 @@ export default function KycDetailsScreen() {
       navigation.dispatch((state) => {
         const routes = [...state.routes];
         while (routes.length > 1 && routes[routes.length - 1].name.startsWith("Kyc")) routes.pop();
-        const params = { source: "booking" as const, ...(justReturned ? { justReturned: true } : {}) };
+        const params = { source: from, ...(justReturned ? { justReturned: true } : {}) };
         return CommonActions.reset({
           ...state,
           routes: [...routes, { key: `KycStatus-${Date.now()}`, name: "KycStatus", params }],

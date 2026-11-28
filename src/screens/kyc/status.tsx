@@ -47,11 +47,15 @@ export default function KycStatusScreen() {
   // their own, which replace `source`.
   const navState = navigation.getState?.();
   const below = navState ? navState.routes[navState.index - 1]?.name : undefined;
-  const fromBooking = route.params?.source === "booking" || below === "ReviewAndBook";
+  // ENG-449: a listing whose publish was locked on the ID check is returned to the same way.
+  const from =
+    route.params?.source ?? (below === "ReviewAndBook" ? "booking" : below === "ListPreview" ? "listing" : undefined);
+  const fromBooking = from !== undefined;
+  const backLabel = from === "listing" ? "Back to your listing" : "Back to your booking";
   // From a price screen the intro is pushed: `navigate` would jump back to an older intro under the price screen
   // and drop it, with its product and dates.
   const openIntro = (extra: { supersede?: true } = {}) => {
-    const params = { source: fromBooking ? ("booking" as const) : ("profile" as const), ...extra };
+    const params = { source: from ?? ("profile" as const), ...extra };
     if (fromBooking) navigation.dispatch(StackActions.push("KycIntro", params));
     else navigation.navigate("KycIntro", params);
   };
@@ -250,7 +254,7 @@ export default function KycStatusScreen() {
     <SubpageHeader
       title={person ? "ID check" : "Business verification"}
       onBack={fromBooking ? toBooking : toProfile}
-      backLabel={fromBooking ? "Back to your booking" : "Back to Profile"}
+      backLabel={fromBooking ? backLabel : "Back to Profile"}
     />
   );
 
@@ -412,11 +416,11 @@ export default function KycStatusScreen() {
         {fromBooking && data.kyc_status === "verified" ? (
           <Button
             onPress={() => {
-              forgetBookingToResume();
+              if (from === "booking") forgetBookingToResume();
               toBooking();
             }}
           >
-            Back to your booking
+            {backLabel}
           </Button>
         ) : null}
         {!fromBooking && resumeTo && data.kyc_status === "verified" ? (
