@@ -93,9 +93,9 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
       return {
         ...business,
         cardTitle: "KYC verified",
-        cardBody: "You can book items that need an ID check.",
+        cardBody: "You can book on Renit.",
         title: "Your ID check passed",
-        body: 'You can now book items that need an ID check. Need to change your PAN? Use "Remove my verification data" below, then check again.',
+        body: 'You can now book on Renit. Need to change your PAN? Use "Remove my verification data" below, then check again.',
         cta: null,
         ctaKind: null,
       };
@@ -113,19 +113,54 @@ function personCopy(status: KycStatus, reason: KycReasonCode | string | null | u
     default:
       if (reason === "case_expired") return business;
       if (reason === "kyc_expired") {
-        const body = `Your ID check was valid for ${months} months and has now expired. Re-verify to book items that need it again.`;
+        const body = `Your ID check was valid for ${months} months and has now expired. Re-verify to keep booking.`;
         return { ...business, cardTitle: "Your KYC has expired", cardBody: firstSentence(body), title: "Your KYC has expired", body, cta: "Re-verify" };
+      }
+      if (withdrawn(reason)) {
+        const body = "After a review, your ID check no longer counts. Verify again to book, or contact support.";
+        return { ...WITHDRAWN, cardBody: firstSentence(body), body, title: "Your KYC was withdrawn", cardTitle: "Your KYC was withdrawn" };
       }
       return {
         ...business,
         cardTitle: "KYC not done yet",
         cardBody: `Verify once. It stays valid for ${months} months.`,
         title: "Check your ID",
-        body: `Renit asks for an ID check when you book items that need one. It stays valid for ${months} months.`,
+        body: `Renit checks your ID before you book. It stays valid for ${months} months.`,
         cta: "Start ID check",
       };
   }
 }
+
+/**
+ * ENG-447: a reviewer revoked an approved check: no case open, with a reviewer's reason (rn-kyc's admin reason codes
+ * other than gstin_inactive, which is the re-check's). The reason itself is not shown: a duplicate must not be told why.
+ * A code this build does not know still reads as a fresh start.
+ */
+const REVOKE_REASONS = [
+  "pan_invalid",
+  "pan_name_mismatch",
+  "gstin_name_mismatch",
+  "aadhaar_signature_invalid",
+  "aadhaar_name_mismatch",
+  "duplicate_identity",
+  "business_name_unverifiable",
+  "other",
+];
+export function withdrawn(reason: string | null | undefined): boolean {
+  return !!reason && REVOKE_REASONS.includes(reason);
+}
+
+const WITHDRAWN: KycStateCopy = {
+  cardTitle: "",
+  cardBody: "",
+  title: "",
+  body: "",
+  cta: "Verify again",
+  ctaKind: "start",
+  secondary: "support",
+  icon: "exclamation",
+  tone: "warning",
+};
 
 /**
  * Title, body, button and tone for a status. The profile card and the status screen both read
@@ -237,6 +272,10 @@ export function kycStateCopy(
           icon: "exclamation",
           tone: "warning",
         };
+      }
+      if (withdrawn(reason)) {
+        const body = "After a review, your verification no longer counts. Verify again, or contact support.";
+        return { ...WITHDRAWN, cardBody: firstSentence(body), body, title: "Your verification was withdrawn", cardTitle: "Your verification was withdrawn" };
       }
       if (reason === "gstin_inactive") {
         // The monthly GSTIN re-check took the badge off (ENG-348).

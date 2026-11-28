@@ -2,7 +2,11 @@ import { describe, expect, it, jest } from "@jest/globals";
 
 import { StackActions } from "@react-navigation/native";
 
-import { startIdCheck } from "@/lib/id-check";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { resumable, startIdCheck } from "@/lib/id-check";
+
+jest.mock("@react-native-async-storage/async-storage", () => ({ __esModule: true, default: { getItem: jest.fn(async () => null), setItem: jest.fn(async () => undefined), removeItem: jest.fn(async () => undefined) } }));
 
 describe("startIdCheck (ENG-351)", () => {
   it("starts at the explanation with nothing on file, and opens where it stands otherwise", () => {
@@ -28,5 +32,30 @@ describe("startIdCheck (ENG-351)", () => {
     const navigation = { dispatch: jest.fn(), getState: () => ({ routes: [{ name: "ReviewAndBook" }, { name: "KycStatus" }] }) };
     startIdCheck(navigation as never, "rejected");
     expect(navigation.dispatch).not.toHaveBeenCalled();
+  });
+});
+
+describe("resumable (ENG-447)", () => {
+  const params = { item: { name: "PRO_1" }, first_day: "2026-12-05", last_day: "2026-12-06", delivery_mode: "pickup" };
+  const at = Date.parse("2026-11-28T10:00:00Z");
+  it("gives back the same account's price screen for a day, and nothing else", () => {
+    expect(resumable({ user: "asha", at, params }, "asha", at + 23 * 3600e3)).toEqual(params);
+    expect(resumable({ user: "asha", at, params }, "asha", at + 25 * 3600e3)).toBeNull(); // a day later
+    expect(resumable({ user: "asha", at, params }, "ravi", at)).toBeNull(); // another account on this phone
+    expect(resumable({ user: "asha", at, params }, undefined, at)).toBeNull(); // signed out
+    expect(resumable({ user: "asha", at, params: {} }, "asha", at)).toBeNull();
+    expect(resumable("junk", "asha", at)).toBeNull();
+  });
+});
+
+describe("startIdCheck keeps the price screen (ENG-447)", () => {
+  it("saves it for the signed-in account, and not when signed out", () => {
+    const navigation = { dispatch: jest.fn(), getState: () => ({ routes: [{ name: "ReviewAndBook" }] }) };
+    const params = { item: { name: "PRO_1" } } as never;
+    startIdCheck(navigation as never, "none", { user: "asha", params });
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith("kyc_booking_to_resume", expect.stringContaining('"user":"asha"'));
+    (AsyncStorage.setItem as jest.Mock).mockClear();
+    startIdCheck(navigation as never, "none", { user: undefined, params });
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled();
   });
 });

@@ -68,7 +68,7 @@ import {
 import { dayErrorText, extensionLines } from "@/lib/day-of";
 import { track, trackLeftOut } from "@/lib/events";
 import { SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
-import { startIdCheck } from "@/lib/id-check";
+import { forgetBookingToResume, startIdCheck } from "@/lib/id-check";
 import { rememberReturnTo } from "@/lib/return-to";
 import { deliveryReason } from "@/lib/delivery";
 import { useTheme } from "@/lib/theme";
@@ -268,7 +268,8 @@ export default function ReviewAndBookScreen() {
   };
   const depositPage = card ? depositOwnPage(quote) : null;
 
-  const openIdCheck = () => startIdCheck(navigation, kyc?.kyc_status);
+  const openIdCheck = () =>
+    startIdCheck(navigation, kyc?.kyc_status, { user: userDetails?.username, params });
 
   const book = async () => {
     if (busy.current) return;
@@ -328,6 +329,7 @@ export default function ReviewAndBookScreen() {
       // from the cart, through the cart while it has more to check out (cart plan §3.4).
       const fromCart = Boolean(params.from_cart) && !extending;
       if (!extending) rememberDates(params.first_day, params.last_day);
+      forgetBookingToResume(); // booked: nothing to come back to after the ID check (ENG-447)
       navigation.reset(
         afterBookRoutes({
           number: answer.booking.number,

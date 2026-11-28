@@ -155,15 +155,15 @@ export function customerName(customer: Pick<Ring["customer"], "first_name" | "la
 }
 
 /**
- * "ID checked · 3 rentals completed". The ID words only where the server says a real check was run (`id_checked` true or
+ * "KYC verified · 3 rentals completed". The ID words only where the server says a real check was run (`id_checked` true or
  * false); with `null` (no real check stands behind the answer, T-41) or no value at all, the line is the rentals alone and
  * nothing says anything about an ID.
  */
 export function customerLine(customer: Pick<Ring["customer"], "rentals_completed"> & { id_checked?: boolean | null }): string {
   const n = customer.rentals_completed;
   const rentals = n === 0 ? "No rentals completed yet" : `${n} ${n === 1 ? "rental" : "rentals"} completed`;
-  if (customer.id_checked === true) return `ID checked · ${rentals}`;
-  if (customer.id_checked === false) return `ID not checked yet · ${rentals}`;
+  if (customer.id_checked === true) return `KYC verified · ${rentals}`;
+  if (customer.id_checked === false) return `KYC not verified yet · ${rentals}`;
   return rentals;
 }
 

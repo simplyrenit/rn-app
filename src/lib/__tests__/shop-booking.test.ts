@@ -249,7 +249,7 @@ describe("the Customer card", () => {
     expect(customerBlock(booking(), NOW)).toEqual({
       name: "Aarav M.",
       initial: "A",
-      line: "ID checked · 3 rentals completed",
+      line: "KYC verified · 3 rentals completed",
       place: "Andheri East · 3.2 km",
       address: null,
       note: "You can call each other from 8:00 am on Sat 24 Oct, before the handover.",

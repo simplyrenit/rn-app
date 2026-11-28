@@ -6,6 +6,7 @@ import { useGlobalContext } from "@/context/global-context";
 import { SCREEN_GUTTER, space } from "@/lib/design-tokens";
 import { track } from "@/lib/events";
 import { successFeedback } from "@/lib/haptics";
+import { bookingToResume, forgetBookingToResume, type BookingToResume } from "@/lib/id-check";
 import { hasVerificationData, kycChecks, kycError, kycStateCopy, kycValidity } from "@/lib/kyc";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -73,6 +74,18 @@ export default function KycStatusScreen() {
   useKycBadgeSync(data);
 
   const status = data?.kyc_status;
+  // ENG-447: opened by the approval push, not from a price screen: the one the customer left, if the app kept it.
+  const [resumeTo, setResumeTo] = useState<BookingToResume | null>(null);
+  const username = userDetails?.username;
+  useEffect(() => {
+    // A price screen still in the stack is the way back already (its own "Back to your booking").
+    if (fromBooking || status !== "verified" || navState?.routes.some((r) => r.name === "ReviewAndBook")) return;
+    let live = true;
+    void bookingToResume(username).then((params) => live && setResumeTo(params));
+    return () => {
+      live = false;
+    };
+  }, [fromBooking, status, username]);
   const reason = data?.reason_code ?? null;
   const latestStatus = useRef(status);
   latestStatus.current = status;
@@ -200,7 +213,7 @@ export default function KycStatusScreen() {
     Alert.alert(
       "Remove your verification data?",
       person
-        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. Items that need an ID check can't be booked until you check again."
+        ? "We'll delete the details we hold for your ID check, including your Aadhaar record. You can't book until you check again."
         : // A badge the re-check already took off (ENG-348) is not "removed" again.
           `We'll delete the details we hold for your verification, including your Aadhaar record.${
             hadBadge ? " Your Verified business badge will be removed." : ""
@@ -397,7 +410,25 @@ export default function KycStatusScreen() {
         ) : null}
 
         {fromBooking && data.kyc_status === "verified" ? (
-          <Button onPress={toBooking}>Back to your booking</Button>
+          <Button
+            onPress={() => {
+              forgetBookingToResume();
+              toBooking();
+            }}
+          >
+            Back to your booking
+          </Button>
+        ) : null}
+        {!fromBooking && resumeTo && data.kyc_status === "verified" ? (
+          // `navigate` returns to that price screen if it is still in the stack, or opens it again with its dates.
+          <Button
+            onPress={() => {
+              forgetBookingToResume();
+              navigation.navigate("ReviewAndBook", resumeTo);
+            }}
+          >
+            Continue your booking
+          </Button>
         ) : null}
 
         <View style={{ flex: 1 }} />

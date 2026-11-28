@@ -13,7 +13,7 @@ import { ApiError, fieldErrors } from "@/lib/api-error";
 import type { BillTo } from "@/lib/business";
 import type { CaptureFlags } from "@/lib/capture";
 import { formatCurrency } from "@/lib/format";
-import { kycStateCopy } from "@/lib/kyc";
+import { kycStateCopy, withdrawn } from "@/lib/kyc";
 import type { PlanUnit } from "@/lib/plans";
 import type { KycStatus } from "@/lib/types";
 import { ALL_DAY, DayHours, Hours, coversWholeDay, hoursRows, istDay, kmText, time12 } from "@/lib/shop";
@@ -1255,24 +1255,26 @@ export function idCheckCopy(
       case "in_review":
         return needed(
           "Your ID check is being reviewed",
-          "You can book this once it's approved. We'll send you a notification. Items that need no ID check can be booked now.",
+          "You can book this once it's approved. We'll send you a notification.",
           "See where it stands"
         );
       case "rejected":
         return needed(
           "Your ID check didn't pass",
-          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes. Items that need no ID check can be booked now.`,
+          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes.`,
           "See what to do"
         );
       case "verified":
         // The quote was read before the approval reached it; it is read again on focus and with the push.
         return needed("Your ID check passed", "Checking this item again…", "See where it stands");
       default:
-        return needed(
-          "This item needs an ID check",
-          "Renit checks your ID once, before you book an item like this. It takes a few minutes, then our team reviews it.",
-          "Start ID check"
-        );
+        if (reason === "kyc_expired") {
+          return needed("Your KYC has expired", "Re-verify to book. It takes a few minutes.", "Re-verify");
+        }
+        if (withdrawn(reason)) {
+          return needed("Your KYC was withdrawn", "Verify again to book, or contact support.", "Verify again");
+        }
+        return needed("Verify your ID to book", "It takes a few minutes, and stays valid for a year.", "Start ID check");
     }
   }
   if (quote.id_check && quote.id_check.needed !== "none" && quote.id_check.passed === true) {
@@ -1459,7 +1461,7 @@ export function bookErrorText(error: ApiError | null): string {
   if (known) return known;
   switch (error?.code) {
     case "id_check_needed":
-      return "This item needs an ID check before you can book it.";
+      return "Verify your ID to book this item.";
     case "terms_not_accepted":
       return "The rental terms have changed. Read them and tick the box again.";
     case "price_changed":

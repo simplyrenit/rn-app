@@ -4,6 +4,7 @@ import { ActivityIndicator, Text } from "react-native";
 // No type package for it is installed (it comes with jest-expo); the tests only need create and act.
 // @ts-ignore
 import TestRenderer, { act } from "react-test-renderer";
+jest.mock("@react-native-async-storage/async-storage", () => ({ __esModule: true, default: { getItem: jest.fn(async () => null), setItem: jest.fn(async () => undefined), removeItem: jest.fn(async () => undefined) } }));
 
 let mockAccountType = "merchant";
 let mockParams: any = undefined;
