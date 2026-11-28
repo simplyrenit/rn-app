@@ -1272,6 +1272,12 @@ describe("capture lists 3: no video when none is needed, and used-up items at th
     const withClip = setVideo(sealed, { uri: "file:///captures/video.mp4", taken_at: "2026-10-24T04:43:00Z" });
     expect(uploadProgress(withClip).total).toBe(4);
     expect(card({ state: "continue", draft: d })?.text).toBe("Started, not finished: 3 of 3 taken.");
+    expect(card({ list: noVideo(), stage: "ready" })?.text).toBe("Not recorded yet. Take the photos of the item now.");
+    expect(card({ list: noVideo(), moment: "return" })?.text).toBe("Not recorded yet. Take the photos of the item as it came back.");
+    expect(card({ list: noVideo(), stage: "returned" })?.text).toBe(
+      "Not recorded at the handover. The item is back now, so photos taken now show it as it is today."
+    );
+    expect(card({ stage: "ready" })?.text).toBe("Not recorded yet. Take the photos and the video of the item now.");
   });
 
   it("says no video in the notice, and shows no empty video tile, when none is needed", () => {

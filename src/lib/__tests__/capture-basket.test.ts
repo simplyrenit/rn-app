@@ -236,4 +236,13 @@ describe("a basket with used-up items on one line (ENG-453)", () => {
     expect(nextWork([sealed])).toMatchObject({ kind: "send" });
     expect(captureBody(sealed).video).toBeUndefined();
   });
+
+  it("sends no partial record when no item needs a video: it would complete, and lock, before the ticks (review r1)", () => {
+    let draft = startDraft({ number: "RN-21345", moment: "handover", side: "owner", list: { ...withSpare, video_required: false } });
+    draft = setIdMatch(up(up(addShot(addShot(draft, "l1_front", photo("a")), "l2_front", photo("b")), "l1_front"), "l2_front"), true);
+    expect(partialDue(draft)).toBe(false);
+    expect(nextWork([draft])).toBeNull();
+    // The same basket with the video asked for still goes ahead as its photos go up (D19).
+    expect(partialDue({ ...draft, list: withSpare })).toBe(true);
+  });
 });

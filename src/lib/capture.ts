@@ -552,9 +552,13 @@ export const bodyKey = (body: CaptureBody): string => JSON.stringify(body);
  * as it comes, adds shots and ticks up across the shop's phones, and lets the code go once every item's shots (and the
  * ID tick) are in, while the video may still be uploading. Sent again whenever what is up has changed. The other
  * person's set is not: it is taken only while a code is out for it.
+ *
+ * Nor is a basket whose list needs no video (ENG-453): the server finishes a record on any send that leaves nothing
+ * `missing`, and without the video a partial send with every shot would lock it before the checklist is ticked (the
+ * ticks then lost as `capture_locked`, the payout early). With no slow video to get ahead of, it waits for the finished send.
  */
 export function partialDue(draft: CaptureDraft): boolean {
-  if (draft.done || draft.forOther || !isBasketList(draft.list) || readyToSend(draft)) return false;
+  if (draft.done || draft.forOther || !isBasketList(draft.list) || !videoRequired(draft.list) || readyToSend(draft)) return false;
   if (draft.error && !draft.error.retry) return false;
   const body = partialBody(draft);
   const empty =
@@ -1174,6 +1178,8 @@ export function recordCard(input: {
   draft: CaptureDraft | null | undefined;
   /** The owner's payout really waits on this record (`payoutPending`): the card says so only then. */
   stake?: boolean;
+  /** The booking's shot list, when the phone has it: a list that needs no video (ENG-453) is not asked for one. */
+  list?: Pick<ShotList, "video_required"> | null;
 }): RecordCardView | null {
   const { state, moment, role, draft } = input;
   if (state === "none") return null;
@@ -1181,6 +1187,7 @@ export function recordCard(input: {
   const title = forOther ? `${input.otherName}'s ${moment} record` : `Your ${moment} record`;
   const progress = draft ? uploadProgress(draft) : null;
   const size = draft?.video?.bytes ? ` The video is ${sizeLabel(draft.video.bytes)}.` : "";
+  const media = videoRequired(draft?.list ?? input.list) ? "photos and video" : "photos";
   const stake = forOther
     ? null
     : role === "owner" && moment === "handover" && input.stake
@@ -1211,9 +1218,9 @@ export function recordCard(input: {
             ? // Once the item is back, "now" would be a photo of how it is today. The owner's card still says what waits on the record
               // (`stake`, a separate line) while the payout does.
               input.stage === "returned" || input.stage === "closed"
-              ? "Not recorded at the handover. The item is back now, so photos and video taken now show it as it is today."
-              : "Not recorded yet. Take the photos and the video of the item now."
-            : "Not recorded yet. Take the photos and the video of the item as it came back.",
+              ? `Not recorded at the handover. The item is back now, so ${media} taken now show it as it is today.`
+              : `Not recorded yet. Take the ${media === "photos" ? "photos" : "photos and the video"} of the item now.`
+            : `Not recorded yet. Take the ${media === "photos" ? "photos" : "photos and the video"} of the item as it came back.`,
         stake,
         button: { label: "Record its condition", action: "open" },
         progress: null,
