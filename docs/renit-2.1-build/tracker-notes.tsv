@@ -292,21 +292,21 @@
 2089:28104	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
 2089:28140	ios	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
 2089:28140	android	n/a	Retired by ENG-463 (simplified sign-in): this screen or state no longer exists. Its successors are in Figma section 02b (2179:31784).
-2089:15649	ios	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2089:15649	android	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2089:15719	ios	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2089:15719	android	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2095:24982	ios	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2095:24982	android	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2095:25130	ios	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2095:25130	android	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2094:22625	ios	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2094:22625	android	pending	ENG-463 added "Continue with mobile number" to the sign-in panel in Figma. Re-export the 3x reference PNG (Figwright plugin), then diff again.
-2179:31785	ios	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31785	android	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31895	ios	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31895	android	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31931	ios	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31931	android	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31979	ios	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
-2179:31979	android	pending	ENG-463 02b frame. Export the 3x reference PNG (Figwright plugin), then run frame_diff.
+2179:31785	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31785	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2179:31895	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31895	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2179:31931	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31931	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2179:31979	ios	pending	ENG-463: 3x reference exported. iOS is checked by hand on Yash's iPhone (2026-11-29: no simulator for this story).
+2179:31979	android	pending	ENG-463: Realme (360dp) matches the layout by eye; a 360dp screen scales about 8% against the 390pt frame, so the % diff needs the 390dp AVD.
+2089:15649	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2089:15649	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2089:15719	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2089:15719	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:24982	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:24982	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:25130	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2095:25130	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2094:22625	ios	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
+2094:22625	android	pending	ENG-463 added "Continue with mobile number"; 3x reference re-exported. Needs a signed-out device to diff.
