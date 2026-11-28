@@ -7,6 +7,7 @@ import {
   DeliveryMode,
   HANDOVER_ID,
   clock,
+  TimeWindow,
   dayOf,
   dayShort,
   deliveryPlace,
@@ -19,6 +20,7 @@ import {
   windowErrorText,
   windowLabel,
   windowSummary,
+  windowTime,
   timeAndDay,
   arrivalWhen,
   earlyNote,
@@ -575,10 +577,18 @@ export function returnWindowErrorText(error: ApiError | null): string {
 
 // ---- ENG-442, an early courier return ------------------------------------------------------------------------------
 
-/** "today, about 2:00 – 3:00 pm" for Return now, "Sun 8 Nov, 10:00 – 11:00 am" for an earlier day. */
-export function earlyWhen(r: { start: string; end: string; now: boolean }): string {
+/**
+ * Return now's slot: "about 3:00 – 4:00 am today", or "tonight" once it is past midnight. Never "Sat night": next to
+ * "today" that reads as yesterday. `today` is the day the customer asks on.
+ */
+export function nowWhen(slot: TimeWindow, today: string): string {
+  return `about ${windowTime(slot)} ${dayOf(slot.start) === today ? "today" : "tonight"}`;
+}
+
+/** "about 2:00 – 3:00 pm today" for Return now, "Sun 8 Nov, 10:00 – 11:00 am" for an earlier day. */
+export function earlyWhen(r: { start: string; end: string; now: boolean; asked_at: string }): string {
   const slot = { start: r.start, end: r.end };
-  return r.now ? `today, about ${windowLabel(slot)}` : windowSummary(slot);
+  return r.now ? nowWhen(slot, dayOf(r.asked_at) ?? "") : windowSummary(slot);
 }
 
 /** "1:42 pm today", "10:10 am tomorrow": when the shop's answer is due. */

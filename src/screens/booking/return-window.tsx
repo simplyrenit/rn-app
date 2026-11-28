@@ -5,7 +5,7 @@ import { NonScrollableContainer } from "@/components/core/non-scrollable-contain
 import { apiError } from "@/lib/api-error";
 import { TimeWindow, dayShort, todayIst, windowLabel } from "@/lib/booking";
 import { correctedNow } from "@/lib/server-clock";
-import { earlyPickNote, earlyRequestCopy, returnWindowCopy, returnWindowErrorText } from "@/lib/day-of";
+import { earlyPickNote, earlyRequestCopy, nowWhen, returnWindowCopy, returnWindowErrorText } from "@/lib/day-of";
 import { MIN_TOUCH_TARGET, SCREEN_GUTTER, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -159,7 +159,7 @@ export default function ReturnWindowScreen() {
           <TouchableOpacity
             accessibilityRole="radio"
             accessibilityState={{ selected: picked === NOW }}
-            accessibilityLabel={`Return now, a rider about ${windowLabel(returnNow)} today`}
+            accessibilityLabel={`Return now, a rider ${nowWhen(returnNow, today)}`}
             activeOpacity={0.7}
             onPress={() => pickSlot(NOW)}
             style={{
@@ -179,13 +179,19 @@ export default function ReturnWindowScreen() {
               </Text>
             </View>
             <Text fontSize="text-sm" tone="body">
-              {`A rider comes about ${windowLabel(returnNow)} today, once the shop accepts`}
+              {`A rider comes ${nowWhen(returnNow, today)}, once the shop accepts`}
             </Text>
           </TouchableOpacity>
         ) : null}
 
         {days.length > 1 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space.sm }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            // To the screen's edges: a chip past the gutter reads as more to scroll, not cut off.
+            style={{ marginHorizontal: -SCREEN_GUTTER }}
+            contentContainerStyle={{ gap: space.sm, paddingHorizontal: SCREEN_GUTTER }}
+          >
             {days.map((d) => {
               const selected = d.day === day;
               return (
