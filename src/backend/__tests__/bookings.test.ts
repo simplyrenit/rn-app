@@ -9,6 +9,7 @@ import {
   fetchBookings,
   fetchCancelOutcome,
   answerWindowChange,
+  askEarlyReturn,
   fetchQuote,
   fetchWindows,
   payRent,
@@ -198,6 +199,14 @@ describe("after the owner accepts", () => {
     expect(api.post).toHaveBeenLastCalledWith("https://api.test/bookings/RN-24831/window-change/", {
       start: "2026-10-24T06:30:00Z",
     });
+  });
+
+  it("asks the shop for an early return (ENG-442): a slot, or Return now", async () => {
+    api.post.mockResolvedValue({ data: { booking: { number: "RN-24831" } } });
+    await askEarlyReturn("RN-24831", { start: "2026-10-25T04:30:00Z" });
+    expect(api.post).toHaveBeenLastCalledWith("https://api.test/bookings/RN-24831/early-return/", { start: "2026-10-25T04:30:00Z" });
+    await askEarlyReturn("RN-24831", { now: true });
+    expect(api.post).toHaveBeenLastCalledWith("https://api.test/bookings/RN-24831/early-return/", { now: true });
   });
 
   it("answers the shop's request to move the window", async () => {

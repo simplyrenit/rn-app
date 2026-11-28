@@ -1,4 +1,5 @@
 import { answerCustomerWindowChange } from "@/backend/shop-bookings";
+import { EarlyReturnCard } from "@/screens/shop/courier";
 import { shopBookingQueryKey, useShopBooking } from "@/backend/shop-ring";
 import { refreshShop } from "@/backend/shop-today";
 import { GetHelp } from "@/components/booking/get-help";
@@ -334,6 +335,7 @@ function BookingPage({
           </View>
         ) : null}
         {mine ? <Notice icon="clock">{mine}</Notice> : null}
+        <EarlyReturnCard booking={booking} receivedAt={receivedAt} />
 
         <Section title="Timeline">
           {/* One child: Timeline returns its steps as a fragment, and the section's 12 gap would open between them. */}

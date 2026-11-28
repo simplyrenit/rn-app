@@ -1,14 +1,17 @@
+import { useKycStatus } from "@/backend/kyc";
 import { useRefreshDetailsOnFocus } from "@/backend/use-refresh-details";
 import { useGlobalContext } from "@/context/global-context";
 import { Avatar, Text } from "@/components/core";
 import { IconButton } from "@/components/core/icon-button";
 import { SCREEN_GUTTER, radius } from "@/lib/design-tokens";
 import { photoUrlOf } from "@/lib/image-url";
+import { kycVerified } from "@/lib/kyc";
 import { useTheme } from "@/lib/theme";
 import Skeleton from "@/components/core/skeleton";
 import React from "react";
 import { View } from "react-native";
 import { PencilSquareIcon } from "react-native-heroicons/outline";
+import { ShieldCheckIcon } from "react-native-heroicons/solid";
 
 // The account block (Profile 2095:25572 "Account block", 390x80): padding 16 24, gap 12, items centred; a 48 avatar,
 // name 16/24 SemiBold over email 14/20 at 70% (gap 2), and a 24 pencil-square at 60%.
@@ -68,6 +71,10 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
   const { color } = useTheme();
   const loading = !userDetails;
   const name = userDetails?.name.trim() ?? "";
+  // ENG-446: the person's own "KYC verified" badge, while their check is in force.
+  // A business keeps its own Verified business badge.
+  const kyc = useKycStatus().data;
+  const verified = userDetails?.account_type !== "merchant" && kycVerified(kyc);
 
   // The status card and the Post gate read the context's copy, so Profile refreshes that one.
   useRefreshDetailsOnFocus();
@@ -103,6 +110,25 @@ const ProfileImgContainer: React.FC<ProfileImgContainerProps> = ({
             {userDetails?.email}
           </Text>
         )}
+        {verified ? (
+          <View
+            style={{
+              alignSelf: "flex-start",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 2,
+              borderRadius: 999,
+              backgroundColor: color.brandWash,
+            }}
+          >
+            <ShieldCheckIcon size={14} color={color.brandText} />
+            <Text fontSize="text-xs" fontWeight="font-semibold" tone="brand">
+              KYC verified
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {!loading && (

@@ -1,8 +1,8 @@
 import type { ApiError } from "@/lib/api-error";
 import type { BookingDay, CourierState } from "@/lib/booking";
 import { clock, dayOf, dayShort, todayIst, windowSummary } from "@/lib/booking";
-import type { CallCopy } from "@/lib/day-of";
-import { byRenit } from "@/lib/delivery";
+import { earlyWhen, replyByText, type CallCopy } from "@/lib/day-of";
+import { byRenit, type EarlyReturnRequest } from "@/lib/delivery";
 import type { Step } from "@/lib/shop-handover";
 
 /**
@@ -57,6 +57,8 @@ export interface OwnerCourier {
     window: { from: string; to: string } | null;
     earliest: string;
     seal: string | null;
+    /** ENG-442: the customer's ask for an early return. Absent from an older server. */
+    request?: EarlyReturnRequest | null;
   };
   attempt: number;
   not_delivered_reason: string | null;
@@ -216,6 +218,36 @@ export function arrivingLine(courier: OwnerCourier): string | null {
   if (!window) return "The customer picks a return window. You are told when a rider is booked.";
   const when = windowSummary({ start: window.from, end: window.to });
   return state === "picked_up" ? `Item arriving ${when}: it is with the rider now` : `Item arriving ${when}`;
+}
+
+/**
+ * ENG-442: the customer's open ask for an early return, for the shop to accept or decline. Null once it is answered,
+ * past its time, or not the shop's to answer. Only an open ask is shown: how it ended is the customer's to read.
+ */
+export function earlyReturnCard(
+  courier: OwnerCourier,
+  can: string[],
+  title: string,
+  now: Date
+): { title: string; body: string } | null {
+  const r = courier.return.request;
+  if (!r || r.outcome || !can.includes("answer_early_return")) return null;
+  if (now.getTime() >= new Date(r.reply_by).getTime()) return null;
+  const last = dayShort(courier.return.earliest);
+  const tail = `Accept by ${replyByText(r.reply_by, now)}. If you don't answer, it comes back ${last}.`;
+  if (r.now) {
+    return {
+      title: "The customer wants to return it now",
+      body: `A rider would bring ${title} back ${earlyWhen(r)}. Renit books the rider as soon as you accept. ${tail}`,
+    };
+  }
+  const day = dayOf(r.start);
+  const early = day ? Math.round((Date.parse(courier.return.earliest) - Date.parse(day)) / 86_400_000) : 0;
+  const days = early > 0 ? ` (${early === 1 ? "1 day" : `${early} days`} early)` : "";
+  return {
+    title: "The customer wants to return it early",
+    body: `A rider would bring ${title} back ${earlyWhen(r)}${days}. ${tail}`,
+  };
 }
 
 /** The owner's return heading while the booking is out: "Item arriving" until the rider has brought it back (ENG-333). */

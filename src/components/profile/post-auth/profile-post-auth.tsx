@@ -101,8 +101,8 @@ const ProfilePostAuth: React.FC<ProfilePostAuthProps> = ({
             <KycCard isDark={isDark} />
           </View>
         ) : (
-          // Anyone else's ID check (ENG-351), once they have one on file. It hides itself otherwise, and its margins
-          // go with it.
+          // Anyone else's ID check (ENG-351), shown for every account since ENG-446. The card hides itself only when
+          // its status cannot be read, and its margins go with it.
           <KycCard isDark={isDark} style={{ marginHorizontal: SCREEN_GUTTER, marginBottom: 16 }} />
         )}
 
