@@ -93,8 +93,9 @@ export const TimeSheet = forwardRef<
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  // Four kit Chips across the content width, 8 apart: 79.5 at 390 (not floored, so the row ends on the gutter).
-  const chip = (width - SCREEN_GUTTER * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+  // Four kit Chips across the content width, 8 apart: 79.5 at 390 (not floored, so the row ends on the gutter). Less
+  // 0.01 so float rounding at a fractional Android width (411.43) never pushes the 4th chip onto the next row.
+  const chip = (width - SCREEN_GUTTER * 2 - GAP * (COLUMNS - 1)) / COLUMNS - 0.01;
   return (
     <CustomBottomSheetModal ref={ref} isDark={isDark} snapPoints={[TIME_SHEET - HOME_STRIP + insets.bottom]} frame>
       <SheetHeader title={title} grabber={false} />

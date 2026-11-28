@@ -421,6 +421,7 @@ export default function BankAccountScreen() {
           <View style={fieldGap}>
             <TextField
               label="Name on the account"
+              accessibilityLabel="Name on the account, required"
               hint="Exactly as the bank has it"
               value={form.holderName}
               onChangeText={(v) => setField("holderName", v)}
@@ -434,6 +435,7 @@ export default function BankAccountScreen() {
           <View style={fieldGap}>
             <TextField
               label="Account number"
+              accessibilityLabel="Account number, required"
               value={form.accountNumber}
               onChangeText={(v) => setField("accountNumber", cleanAccountNumber(v))}
               error={errors.accountNumber}
@@ -448,6 +450,7 @@ export default function BankAccountScreen() {
           <View style={fieldGap}>
             <TextField
               label="Confirm account number"
+              accessibilityLabel="Confirm account number, required"
               value={form.confirmNumber}
               onChangeText={(v) => setField("confirmNumber", cleanAccountNumber(v))}
               error={errors.confirmNumber}
@@ -461,6 +464,7 @@ export default function BankAccountScreen() {
           </View>
           <TextField
             label="IFSC code"
+            accessibilityLabel="IFSC code, required"
             hint="11 characters, like HDFC0001234"
             value={form.ifsc}
             onChangeText={(v) => setField("ifsc", cleanIfsc(v))}

@@ -424,6 +424,7 @@ function DeliveryEditor({ shop, design }: { shop: Shop; design?: DeliveryDesign 
                 <View style={{ marginBottom: -density.fieldGap }}>
                   <TextField
                     label="Starting fee (₹)"
+                    accessibilityLabel="Starting fee (₹), required"
                     hint="Charged on every delivery"
                     keyboardType="decimal-pad"
                     value={form.base}
@@ -435,6 +436,7 @@ function DeliveryEditor({ shop, design }: { shop: Shop; design?: DeliveryDesign 
                 <View style={{ marginBottom: -density.fieldGap }}>
                   <TextField
                     label="Each kilometre (₹)"
+                    accessibilityLabel="Each kilometre (₹), required"
                     hint="Added for every kilometre away"
                     keyboardType="decimal-pad"
                     value={form.perKm}

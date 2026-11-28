@@ -114,6 +114,7 @@ function GstForm({ shop, design }: { shop: Shop; design?: GstDesign }) {
         {registered ? (
           <TextField
             label="GSTIN"
+            accessibilityLabel="GSTIN, required"
             hint="15 characters, like 22ABCDE1234F1Z5"
             value={gstin}
             maxLength={15}
