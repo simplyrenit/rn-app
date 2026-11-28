@@ -289,3 +289,63 @@
 2097:30513	android	n/a	Opening the sheet sends a Firebase SMS and the countdown is clock-bound; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (focused box edge 1, not 1.5: OTP library).
 2097:30585	ios	n/a	Needs a failed Firebase code check; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (error line is the verifyPhoneNumberChange failure copy).
 2097:30585	android	n/a	Needs a failed Firebase code check; checked by jest src/components/bank/__tests__/unlock-sheet-centred.test.tsx (error line is the verifyPhoneNumberChange failure copy).
+2095:26754	ios	pass	ENG-438's Profile, frozen here (section 13 metrics win, REVIEW b4-03): the frame's 96-high account block, the pill at the row's end, the 40 group headers and the inset divider differ, and the avatar reads MH (initialsOf takes the first and last word) where the frame has MG.
+2095:26754	android	pass	As iOS: ENG-438's Profile, frozen here (section 13 metrics win, REVIEW b4-03): the frame's 96-high account block, the pill at the row's end, the 40 group headers and the inset divider differ, and the avatar reads MH (initialsOf takes the first and last word) where the frame has MG.
+2095:26883	ios	pass	ENG-438's Profile, frozen here (section 13 metrics win, REVIEW b4-03): the frame's 96-high account block, the pill at the row's end, the 40 group headers and the inset divider differ, and the avatar reads MH (initialsOf takes the first and last word) where the frame has MG; Request review again sits under the status line as in section 13.
+2095:26883	android	pass	As iOS (ENG-438 Profile metrics).
+2095:27019	ios	pass	Frame predates ENG-446: since ENG-446 every account shows the KYC card, so the individual owner gets 'KYC not done yet' above Account and the rows sit about 66pt lower; the rest is ENG-438's Profile, frozen here (section 13 metrics win, REVIEW b4-03): the frame's 96-high account block, the pill at the row's end, the 40 group headers and the inset divider differ, and the avatar reads MH (initialsOf takes the first and last word) where the frame has MG.
+2095:27019	android	pass	As iOS: ENG-446's KYC card for every account (frame predates it) plus ENG-438 Profile metrics.
+2096:26244	ios	fail-heatmap	Scroll end diffed by region (frame rows 480-899 vs app y391, scrollToEnd seed) 0.72%, only the drawn home indicator differs; first screen is 2096:26342, where the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2096:26244	android	pass	Scroll end by region (frame rows 480-844 vs app y425.7) 0.84%; first screen is 2096:26342.
+2096:26342	ios	fail-heatmap	0.59%; only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2096:26342	android	pass	1.58%; Material switch shape vs the iOS-style frame switch, rows under 1pt off from Android text metrics.
+2096:26392	ios	fail-heatmap	0.87%; the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed), so 'Closed · customers can't book from' wraps one word early.
+2096:26392	android	pass	1.79%; wraps as drawn, Material switch shape.
+2096:26472	ios	fail-heatmap	0.97% with ENG-433's RingPermissionCard layout=inline; the card draws a bell where the frame has exclamation-triangle (ENG-433's file, for ENG-440), and the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed) (title wraps one word early).
+2096:26472	android	pass	2.92%: the inline ring card's bell vs the frame's exclamation-triangle (ENG-433, for ENG-440) and the multi-line card text runs about 2/3pt shorter per paragraph (Android text metrics).
+2096:26620	ios	pass	1.56%: the state is centred on the whole screen as drawn, so in the 47pt-vs-54pt status-bar crop it sits 7pt lower; screen-aligned diffs/ios/2096-26620.screen 0.56%. Seed turns off React Query retries so the 404 shows the error state.
+2096:26620	android	text-width	2.92% only from the crop: the screen-centred state sits 30dp lower against the 24dp status bar; screen-aligned diffs/android/2096-26620.screen 0.44%.
+2096:26658	ios	pass	8.08%: ENG-433's shared DayPickerModal; with a date set it keeps Clear date (brand outline, behaviour) where this frame draws a Cancel text button, adds a footer hairline and sets the day rows about 2pt further apart (ENG-433's file, for ENG-440). Row behind the scrim reads 24 Dec; closed_until must move after 2026-12-23.
+2096:26658	android	pass	13.28%: as iOS (ENG-433's DayPickerModal: Clear date and footer vs the frame's Cancel), plus the modal centres on the taller emulator content area.
+2096:29485	ios	pass	0.31% with the sheet bottom-aligned (split B=609); frame_diff's default bar split misplaces sheets.
+2096:29485	android	pass	0.54% with the sheet bottom-aligned (split B=609).
+2096:29570	ios	fail-heatmap	0.69% sheet bottom-aligned (split B=414); kit warning compact Sign out label Bold vs frame SemiBold (kit button, ENG-426) and the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed) behind the scrim.
+2096:29570	android	pass	1.73% sheet bottom-aligned (split B=414); rows under 1pt off from Android text metrics; kit Sign out label Bold vs SemiBold (ENG-426).
+2096:29658	ios	fail-heatmap	0.60% sheet bottom-aligned (split B=429); the seed turns off retries so the 404 shows the error at once; only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed) behind the scrim.
+2096:29658	android	pass	1.53% sheet bottom-aligned (split B=429).
+2096:29735	ios	fail-heatmap	0.60% sheet bottom-aligned (split B=261); only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed) behind the scrim.
+2096:29735	android	text-width	2.03% sheet bottom-aligned (split B=261): the three multi-line paragraphs each run about 2/3pt shorter (Android text metrics), as 2095:24558.
+2096:29799	ios	fail-heatmap	First screen is 2096:29910; scroll end (the Sunday row the frame draws below the bar, frame rows 844-899 vs app y646) differs only in the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2096:29799	android	pass	Scroll end Sunday row (frame rows 844-899 vs app y679.7) 3.10%, only the Material switch shape differs; first screen is 2096:29910.
+2096:29910	ios	fail-heatmap	1.60%; only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2096:29910	android	pass	1.96%; Material switch shape, rows under 1pt off from Android text metrics.
+2096:30017	ios	fail-heatmap	The frame is scrolled 360pt, past the real end (content ends 151pt above the bar), so the Saturday and Sunday blocks are diffed by region at the scroll end (frame rows 362-563 vs app y499.7): only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2096:30017	android	pass	As iOS, region at the scroll end (app y534) 2.14%: only the Material switch shape differs.
+2096:30129	ios	pass	0.53% with the sheet bottom-aligned (split B=649).
+2096:30129	android	pass	0.92% with the sheet bottom-aligned (split B=649).
+2097:29184	ios	fail-heatmap	First screen is 2097:29301; scrollY 500 seed, lower block by region (frame rows 844-1056: map foot, distance notes, Areas header) 0.75%; below it the app keeps 8 preview chips where the frame draws 6 (behaviour, bd25d24).
+2097:29184	android	text-width	Lower block by region (app y318.7) 2.45%: 'Measured in a straight line…' wraps 'is' one word early (Android text width); first screen is 2097:29301.
+2097:29301	ios	fail-heatmap	1.04%, but the distance steppers are 50 (core/stepper.tsx, ENG-435: default 50, compact 32) against the frame's 44/r22, so the map below sits 6pt lower; the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2097:29301	android	pass	1.53%; steppers 50 vs 44 as iOS (ENG-435), Material switch.
+2097:29393	ios	fail-heatmap	0.70%; the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed), so the 'Off. Customers see Self pickup…' line wraps one word early.
+2097:29393	android	pass	0.90%.
+2097:29434	ios	pass	7.50%: behaviour kept, Save changes stays disabled while nothing is unsaved where the frame draws it enabled; steppers 50 vs 44 (ENG-435) move the address card 6pt; iOS 26 switch.
+2097:29434	android	pass	7.93%: as iOS (disabled Save is behaviour, steppers 50 vs 44 ENG-435).
+2097:29504	ios	pass	4.44%: the app keeps 8 preview chips (behaviour, bd25d24) where the frame draws 6, and the frame is scrolled past the real end; the Every-area-is-off Notice by region diffs/ios/2097-29504.notice 2.18%: its link sits 4pt high (booking/parts Notice wraps children in Text, ENG-429).
+2097:29504	android	pass	4.46%: as iOS (8 preview chips by behaviour, frame over-scrolled, Notice link 4pt high from ENG-429's Notice).
+2097:29629	ios	fail-heatmap	0.58% with the sheet bottom-aligned (split B=225, frame strip 21); the Discard sheet matches; behind the scrim the steppers are 50 vs 44 (ENG-435) and the iOS 26 switch is 63x28.
+2097:29629	android	pass	1.04% with the sheet bottom-aligned (split B=225, ref bottom 21); steppers 50 vs 44 behind the scrim (ENG-435).
+2097:29740	ios	fail-heatmap	0.61% after rows went to 56 with the hairline inside; Khar West reads '2 km' where the frame has '2.0 km' (kmText in lib/shop.ts, ENG-433).
+2097:29740	android	pass	0.78%; '2 km' vs '2.0 km' (kmText, ENG-433).
+2097:30015	ios	fail-heatmap	0.39%; only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2097:30015	android	pass	1.06%; Material switch shape.
+2097:30055	ios	fail-heatmap	0.39%; only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2097:30055	android	pass	0.54%.
+2097:30090	ios	fail-heatmap	0.42% typed-state seed, Save GST not tapped; only the iOS 26 AppSwitch draws 63x28 against the frame's 51x31 (plan §0.7, lib/switch.ts, not fixed).
+2097:30090	android	pass	1.52%; error line under 1pt off from Android text metrics.
+2097:30195	ios	fail-heatmap	0.35%; the kit BottomBar draws the Primary label 16/24 where this frame overrides it to 14/20 (ENG-426 kit, for ENG-440); Save shop address not tapped.
+2097:30195	android	pass	0.55%; kit Primary label 16/24 vs the frame's 14/20 (ENG-426).
+2097:30421	ios	pass	0.46% form seed (fake frame values, caret hidden), Verify account not tapped; run singly.
+2097:30421	android	pass	1.35%, Verify account not tapped.
+2097:30326	ios	pass	0.19%; can_take_bookings false so no ring card; ENG-446 changed no bank-account state (KYC validity and Re-verify live on Profile and the KYC screens).
+2097:30326	android	pass	0.40%.

@@ -2,15 +2,13 @@
  "ref": "../figma/12/2096-29799.png",
  "app": "ios-2096-29799.png",
  "platform": "ios",
- "mismatch_pct": 5.575,
+ "mismatch_pct": 3.978,
  "threshold_pct": 2.0,
  "pass": false,
  "compared_px": [
   1170,
-  2289
+  165
  ],
- "app_scaled_height": 2289,
- "uncovered_rows": 0,
- "split_bottom_pt": 85.0,
- "seam_hidden_rows": 18
+ "app_scaled_height": 165,
+ "uncovered_rows": 0
 }
