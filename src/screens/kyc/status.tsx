@@ -379,7 +379,13 @@ export default function KycStatusScreen() {
 
         {primary && copy.cta ? (
           <View style={{ gap: space.sm }}>
-            <Button onPress={primary} loading={copy.ctaKind === "resume" && resuming} disabled={resuming}>
+            <Button
+              // Re-verify, above, is the main action while it is offered.
+              variant={data.can_reverify ? "outline" : undefined}
+              onPress={primary}
+              loading={copy.ctaKind === "resume" && resuming}
+              disabled={resuming}
+            >
               {copy.cta}
             </Button>
             {copy.secondary === "start_over" ? (

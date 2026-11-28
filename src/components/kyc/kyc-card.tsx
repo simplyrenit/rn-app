@@ -44,8 +44,10 @@ export function KycCard({ isDark }: { isDark: boolean }) {
   const cta = reverify ? "Re-verify" : copy.cta && copy.ctaKind !== "profile" ? copy.cta : null;
   // Nothing on file starts at the explanation, and so does Re-verify. Anyone else sees where it
   // stands, which is also where a timed-out verification's data can be removed.
+  // An expired check also starts again at the intro: its old case is still on file, so it would
+  // otherwise open the status screen first.
   const open = () =>
-    reverify
+    reverify || data.reason_code === "kyc_expired"
       ? navigation.navigate("KycIntro", { source: "reverify" })
       : !hasVerificationData(data)
       ? navigation.navigate("KycIntro", { source: "profile" })
@@ -57,6 +59,7 @@ export function KycCard({ isDark }: { isDark: boolean }) {
     : null;
   // A re-verification already open (can_reverify false) is told where it stands by the copy, not
   // asked to re-verify again.
+  const checks = validity ? kycChecks(data, person) : [];
   const warning =
     validity?.soon && reverify
       ? `Expires in ${validity.daysLeft} ${validity.daysLeft === 1 ? "day" : "days"}. Re-verify now; your current check stays valid until the new one is decided.`
@@ -70,7 +73,9 @@ export function KycCard({ isDark }: { isDark: boolean }) {
       <TouchableOpacity
         onPress={open}
         accessibilityRole="button"
-        accessibilityLabel={[copy.cardTitle, copy.cardBody, dates, warning].filter(Boolean).join(". ")}
+        accessibilityLabel={[copy.cardTitle, copy.cardBody, dates, ...checks.map((c) => `${c} checked`), warning]
+          .filter(Boolean)
+          .join(". ")}
         activeOpacity={0.7}
         style={{ minHeight: MIN_TOUCH_TARGET }}
         className={`mb-4 flex-row rounded-card border px-4 py-3 ${
@@ -88,13 +93,11 @@ export function KycCard({ isDark }: { isDark: boolean }) {
               {dates}
             </Text>
           ) : null}
-          {validity
-            ? kycChecks(data, person).map((check) => (
-                <Text key={check} tone="dim" fontSize="text-sm" accessibilityLabel={`${check} checked`}>
-                  ✓ {check}
-                </Text>
-              ))
-            : null}
+          {checks.map((check) => (
+            <Text key={check} tone="dim" fontSize="text-sm">
+              ✓ {check}
+            </Text>
+          ))}
           {warning ? (
             <Text tone="warning" fontSize="text-sm">
               {warning}
