@@ -417,7 +417,7 @@ describe("ENG-442, the customer's early return", () => {
   it("Return now: booked as soon as the shop accepts", () => {
     const card = earlyReturnCard(asking({ now: true, start: "2026-10-24T09:30:00Z", end: "2026-10-24T10:30:00Z" }), can, "Canon EOS R6", now);
     expect(card?.title).toBe("The customer wants to return it now");
-    expect(card?.body).toMatch(/^A rider would bring Canon EOS R6 back today, about 3:00 – 4:00 pm\. Renit books the rider as soon as you accept\./);
+    expect(card?.body).toMatch(/^A rider would bring Canon EOS R6 back about 3:00 – 4:00 pm today\. Renit books the rider as soon as you accept\./);
   });
 
   it("nothing to answer once it ended, past its time, or not the shop's to answer", () => {

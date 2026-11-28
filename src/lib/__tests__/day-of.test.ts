@@ -14,6 +14,7 @@ import {
   returnWindowErrorText,
   earlyPickNote,
   earlyRequestCopy,
+  nowWhen,
   captured,
   codeErrorText,
   codeIsClosed,
@@ -878,7 +879,15 @@ describe("ENG-442, an early courier return", () => {
       open: true,
     });
     const soon = { ...ask, now: true, start: "2026-10-24T09:30:00Z", end: "2026-10-24T10:30:00Z", outcome: null };
-    expect(earlyRequestCopy(soon, "2026-10-26", now)?.body).toMatch(/^You asked for a rider today, about 3:00 – 4:00 pm\./);
+    expect(earlyRequestCopy(soon, "2026-10-26", now)?.body).toMatch(/^You asked for a rider about 3:00 – 4:00 pm today\./);
+  });
+
+  it("Return now before 4 am is today, or tonight past midnight: never \"Sat night\" next to today", () => {
+    // Asked Sun 29 Nov 1:49 am IST for 3:00 – 4:00 am: the device check found "3:00 – 4:00 am · Sat night today".
+    const slot = { start: "2026-11-28T21:30:00Z", end: "2026-11-28T22:30:00Z" };
+    expect(nowWhen(slot, "2026-11-29")).toBe("about 3:00 – 4:00 am today");
+    // Asked Sat 11:30 pm for the same slot: it is after midnight.
+    expect(nowWhen(slot, "2026-11-28")).toBe("about 3:00 – 4:00 am tonight");
   });
 
   it("how it ended, and an open ask past its time reads as no answer", () => {
