@@ -29,7 +29,17 @@ export default function EditIncludedItems() {
     handover_only_items: data.handover_only_items ?? [],
   }));
   const [items, setItems] = useState<ListingItems>(start);
-  const categoryId = listing.category?.id ?? null;
+  const pending = readPendingEdit(listing.pending_edit);
+  // A category change that waits is the one the owner sees, and the one these items will go with: its id (a change
+  // carries the id, the listing an object).
+  const waitingCategory = pending?.changes.category;
+  const waitingId =
+    typeof waitingCategory === "number"
+      ? waitingCategory
+      : typeof (waitingCategory as { id?: unknown } | null | undefined)?.id === "number"
+      ? ((waitingCategory as { id: number }).id)
+      : null;
+  const categoryId = waitingId ?? listing.category?.id ?? null;
   // The section reads the same query: one request.
   const { data: options } = useCategoryChecklist(categoryId);
   const { updateMyProductDetails, loading } = useProfile();
@@ -55,7 +65,7 @@ export default function EditIncludedItems() {
     <NonScrollableContainer>
       <EditStepHeader title="What comes with it" />
       {/* Which values are waiting: shown here, and customers still see the earlier ones. */}
-      <HeldFormNotice pending={readPendingEdit(listing.pending_edit)} />
+      <HeldFormNotice pending={pending} />
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="handled"
         enableOnAndroid
