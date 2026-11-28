@@ -268,7 +268,8 @@ export default function ReviewAndBookScreen() {
   };
   const depositPage = card ? depositOwnPage(quote) : null;
 
-  const openIdCheck = () => startIdCheck(navigation, kyc?.kyc_status);
+  const openIdCheck = () =>
+    startIdCheck(navigation, kyc?.kyc_status, { user: userDetails?.username, params });
 
   const book = async () => {
     if (busy.current) return;

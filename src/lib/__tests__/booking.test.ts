@@ -849,7 +849,7 @@ describe("the ID check", () => {
   it("asks for the check when the item needs one the customer has not passed (the 40,000 rupee item)", () => {
     expect(idCheckCopy(withCheck("id", false, ["id_check_needed"]))).toMatchObject({
       state: "needed",
-      title: "This item needs an ID check",
+      title: "Verify your ID to book",
     });
     // Either signal alone is enough.
     expect(idCheckCopy(withCheck("id", false))?.state).toBe("needed");
@@ -878,8 +878,8 @@ describe("the ID check", () => {
       const copy = idCheckCopy(needed, null, status);
       return [copy?.state, copy?.title, copy?.action];
     };
-    expect(words(undefined)).toEqual(["needed", "This item needs an ID check", "Start ID check"]);
-    expect(words("none")).toEqual(["needed", "This item needs an ID check", "Start ID check"]);
+    expect(words(undefined)).toEqual(["needed", "Verify your ID to book", "Start ID check"]);
+    expect(words("none")).toEqual(["needed", "Verify your ID to book", "Start ID check"]);
     expect(words("action_required")).toEqual(["needed", "Finish your ID check", "Continue ID check"]);
     expect(words("pending")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
     expect(words("in_review")).toEqual(["needed", "Your ID check is being reviewed", "See where it stands"]);
@@ -889,6 +889,15 @@ describe("the ID check", () => {
     for (const status of ["in_review", "rejected"] as const) {
       expect(idCheckCopy(needed, null, status)?.body).toMatch(/Items that need no ID check can be booked now\./);
     }
+    // ENG-447: when every booking asks (the item's own tier is "none"), there is nothing cheaper to point at.
+    const everyBooking = withCheck("none", false, ["id_check_needed"]);
+    for (const status of ["in_review", "rejected"] as const) {
+      expect(idCheckCopy(everyBooking, null, status)?.body).not.toMatch(/Items that need no ID check/);
+    }
+    expect(idCheckCopy(everyBooking, null, "none", "kyc_expired")).toMatchObject({
+      title: "Your KYC has expired",
+      action: "Re-verify",
+    });
     // Why it failed, in the first sentence of the status screen's words.
     expect(idCheckCopy(needed, null, "rejected", "pan_name_mismatch")?.body).toMatch(
       /^The name on your PAN didn't match the name on your Renit account\. You can't book this item until it passes\./

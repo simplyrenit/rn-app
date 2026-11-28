@@ -1244,6 +1244,8 @@ export function idCheckCopy(
     (quote.id_check !== null && quote.id_check.needed !== "none" && quote.id_check.passed === false);
   if (notPassed) {
     const needed = (title: string, body: string, action: string): IdCheckCopy => ({ state: "needed", title, body, action });
+    // ENG-447: with every booking asking for the check, the item's own tier says "none": there is nothing else to book.
+    const others = quote.id_check?.needed === "none" ? "" : " Items that need no ID check can be booked now.";
     switch (status) {
       case "action_required":
         return needed(
@@ -1255,24 +1257,23 @@ export function idCheckCopy(
       case "in_review":
         return needed(
           "Your ID check is being reviewed",
-          "You can book this once it's approved. We'll send you a notification. Items that need no ID check can be booked now.",
+          `You can book this once it's approved. We'll send you a notification.${others}`,
           "See where it stands"
         );
       case "rejected":
         return needed(
           "Your ID check didn't pass",
-          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes. Items that need no ID check can be booked now.`,
+          `${kycStateCopy("rejected", reason, true).cardBody} You can't book this item until it passes.${others}`,
           "See what to do"
         );
       case "verified":
         // The quote was read before the approval reached it; it is read again on focus and with the push.
         return needed("Your ID check passed", "Checking this item again…", "See where it stands");
       default:
-        return needed(
-          "This item needs an ID check",
-          "Renit checks your ID once, before you book an item like this. It takes a few minutes, then our team reviews it.",
-          "Start ID check"
-        );
+        if (reason === "kyc_expired") {
+          return needed("Your KYC has expired", "Re-verify to book. It takes a few minutes.", "Re-verify");
+        }
+        return needed("Verify your ID to book", "It takes a few minutes, and stays valid for a year.", "Start ID check");
     }
   }
   if (quote.id_check && quote.id_check.needed !== "none" && quote.id_check.passed === true) {

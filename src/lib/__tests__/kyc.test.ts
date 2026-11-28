@@ -119,7 +119,17 @@ describe("state copy", () => {
       cta: "Start again",
       tone: "warning",
     });
-    expect(kycStateCopy("none", "pan_invalid")).toEqual(kycStateCopy("none", null));
+    expect(kycStateCopy("none", "a_code_from_a_newer_server")).toEqual(kycStateCopy("none", null));
+  });
+
+  it("says a check a reviewer revoked was withdrawn, without saying why (ENG-447)", () => {
+    for (const person of [true, false]) {
+      const copy = kycStateCopy("none", "duplicate_identity", person);
+      expect(copy).toMatchObject({ cta: "Verify again", ctaKind: "start", secondary: "support", tone: "warning" });
+      expect(copy.title).toMatch(/withdrawn/);
+      expect(copy.body).not.toMatch(/duplicate|same/i);
+    }
+    expect(kycStateCopy("none", "gstin_inactive").title).toBe("Your Verified badge was removed");
   });
 
   it("says why the badge was removed when the monthly GSTIN re-check took it off", () => {

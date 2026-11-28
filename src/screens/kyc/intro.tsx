@@ -37,12 +37,12 @@ const PERSON = {
   title: "Check your ID",
   // ENG-446: a check lasts KYC_VALID_MONTHS (12); `valid_months` from the status words it when known.
   body: (months: number) =>
-    `Renit checks your ID before you rent some higher-value items. A check stays valid for ${months} months.`,
+    `Renit checks your ID before you book. A check stays valid for ${months} months.`,
   needs: [
     { Icon: IdentificationIcon, text: "Your own PAN" },
     { Icon: DevicePhoneMobileIcon, text: "Your Aadhaar linked to DigiLocker. You'll confirm with an OTP." },
   ],
-  optional: "You only need this to rent items that ask for it. Everything else can be booked without it.",
+  optional: "It takes a few minutes, and you only do it once a year.",
   consent:
     "I've read this and agree to Renit and Cashfree Payments India Private Limited using my details to check my ID.",
 };
