@@ -1,6 +1,6 @@
 import { Panel } from "@/components/booking/parts";
 import { Text } from "@/components/core";
-import { IncludedRow, SetView, Tile } from "@/lib/capture";
+import { IncludedRow, SetView, Tile, USED_UP_HEADING } from "@/lib/capture";
 import { MIN_TOUCH_TARGET, darkColors, radius, space } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import { toast } from "@/lib/toast";
@@ -94,7 +94,7 @@ function SetCard({ title, view, note }: { title: string; view: SetView; note?: s
   const { video } = view;
   // No player in the app: the video plays from its address in the phone's browser.
   const play = () =>
-    video.url &&
+    video?.url &&
     void Linking.openURL(video.url).catch(() => toast.error("The video could not be opened"));
   return (
     <Panel style={{ flex: 1, padding: space.sm, gap: space.sm }}>
@@ -111,28 +111,31 @@ function SetCard({ title, view, note }: { title: string; view: SetView; note?: s
           <PhotoTile key={tile.key} tile={tile} onOpen={setOpen} />
         ))}
       </View>
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel={video.url ? `${video.label}. Play` : video.taken ? `${video.label}: uploading` : `${video.label}: not recorded yet`}
-        accessibilityState={{ disabled: !video.url }}
-        disabled={!video.url}
-        activeOpacity={0.8}
-        onPress={play}
-        style={{
-          minHeight: MIN_TOUCH_TARGET,
-          borderRadius: radius.input,
-          backgroundColor: color.surfaceRaised,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: space.xs,
-        }}
-      >
-        <PlayIcon size={18} color={video.taken ? color.text : color.textDim} />
-        <Text fontSize="text-xs" tone={video.taken ? "default" : "dim"}>
-          {video.label}
-        </Text>
-      </TouchableOpacity>
+      {/* No video when the list asks for none (ENG-451). */}
+      {video ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={video.url ? `${video.label}. Play` : video.taken ? `${video.label}: uploading` : `${video.label}: not recorded yet`}
+          accessibilityState={{ disabled: !video.url }}
+          disabled={!video.url}
+          activeOpacity={0.8}
+          onPress={play}
+          style={{
+            minHeight: MIN_TOUCH_TARGET,
+            borderRadius: radius.input,
+            backgroundColor: color.surfaceRaised,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: space.xs,
+          }}
+        >
+          <PlayIcon size={18} color={video.taken ? color.text : color.textDim} />
+          <Text fontSize="text-xs" tone={video.taken ? "default" : "dim"}>
+            {video.label}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       <PhotoViewer tile={open} onClose={() => setOpen(null)} />
     </Panel>
   );
@@ -155,57 +158,76 @@ export function TwoSets({ left, right }: { left: SetColumn; right: SetColumn }) 
   );
 }
 
-/** "What's included": each item with its tick, and a note where the other person left it unticked. */
+/**
+ * "What's included": each item with its tick, and a note where the other person left it unticked. The used-up items
+ * (ENG-451, only ever given at the handover) follow under their own sub-heading, as on the capture's checklist.
+ */
 export function IncludedList({ rows }: { rows: IncludedRow[] }) {
-  const { color } = useTheme();
   if (rows.length === 0) return null;
+  const kept = rows.filter((row) => !row.usedUp);
+  const usedUp = rows.filter((row) => row.usedUp);
   return (
     <View style={{ gap: space.sm }}>
       <Text role="sectionTitle" accessibilityRole="header">
         What's included
       </Text>
-      <Panel>
-        {rows.map((row, index) => (
+      {kept.length > 0 ? <IncludedPanel rows={kept} /> : null}
+      {usedUp.length > 0 ? (
+        <>
+          <Text fontSize="text-sm" fontWeight="font-bold" accessibilityRole="header">
+            {USED_UP_HEADING}
+          </Text>
+          <IncludedPanel rows={usedUp} />
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+function IncludedPanel({ rows }: { rows: IncludedRow[] }) {
+  const { color } = useTheme();
+  return (
+    <Panel>
+      {rows.map((row, index) => (
+        <View
+          key={row.item}
+          accessible
+          accessibilityLabel={`${row.item}: ${row.ticked ? "ticked" : "not ticked"}${row.note ? `. ${row.note}` : ""}`}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: space.md,
+            minHeight: MIN_TOUCH_TARGET,
+            paddingHorizontal: space.md,
+            paddingVertical: space.sm,
+            borderTopWidth: index === 0 ? 0 : 1,
+            borderTopColor: color.line,
+          }}
+        >
           <View
-            key={row.item}
-            accessible
-            accessibilityLabel={`${row.item}: ${row.ticked ? "ticked" : "not ticked"}${row.note ? `. ${row.note}` : ""}`}
             style={{
-              flexDirection: "row",
+              width: 24,
+              height: 24,
+              borderRadius: radius.full,
+              backgroundColor: row.ticked ? color.successWash : "transparent",
+              borderWidth: row.ticked ? 0 : 1.5,
+              borderColor: color.inputLine,
               alignItems: "center",
-              gap: space.md,
-              minHeight: MIN_TOUCH_TARGET,
-              paddingHorizontal: space.md,
-              paddingVertical: space.sm,
-              borderTopWidth: index === 0 ? 0 : 1,
-              borderTopColor: color.line,
+              justifyContent: "center",
             }}
           >
-            <View
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: radius.full,
-                backgroundColor: row.ticked ? color.successWash : "transparent",
-                borderWidth: row.ticked ? 0 : 1.5,
-                borderColor: color.inputLine,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {row.ticked ? <CheckIcon size={14} color={color.success} /> : null}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text fontSize="text-md">{row.item}</Text>
-              {row.note ? (
-                <Text fontSize="text-xs" tone="warning">
-                  {row.note}
-                </Text>
-              ) : null}
-            </View>
+            {row.ticked ? <CheckIcon size={14} color={color.success} /> : null}
           </View>
-        ))}
-      </Panel>
-    </View>
+          <View style={{ flex: 1 }}>
+            <Text fontSize="text-md">{row.item}</Text>
+            {row.note ? (
+              <Text fontSize="text-xs" tone="warning">
+                {row.note}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      ))}
+    </Panel>
   );
 }

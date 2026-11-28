@@ -46,6 +46,13 @@ export interface ShotList {
   video_hint: string;
   /** The checklist, ticked at handover and again at return. */
   included_items: string[];
+  /**
+   * ENG-451: the listing's used-up items (a refill, a cartridge), ticked at the handover only and never asked back at the
+   * return (`checklistItems`). A basket's are labelled like `included_items` ("Title: item"). Absent from an older server: none.
+   */
+  handover_only_items?: string[];
+  /** ENG-451: false when no item needs a video, so the record is complete without one. Absent from an older server: true. */
+  video_required?: boolean;
   /** `lines`: a basket's checklist, each item's own (`lines[].included_items_source`). */
   included_items_source?: "listing" | "category" | "generic" | "lines";
   /** The owner looks at the customer's ID at the handover and ticks that the name matches. */
@@ -70,10 +77,23 @@ export interface ShotListLine {
   prefix: string;
   included_items: string[];
   included_items_source?: string;
+  handover_only_items?: string[];
 }
 
 /** A booking of several items: its record names each item's keys, and the shop's return record ticks each one Received. */
 export const isBasketList = (list: Pick<ShotList, "lines"> | null | undefined): boolean => Array.isArray(list?.lines);
+
+/** The list asks for the video. Only an explicit `false` (ENG-451) drops it: an older server's list, or one kept on the phone, always did. */
+export const videoRequired = (list: Pick<ShotList, "video_required"> | null | undefined): boolean => list?.video_required !== false;
+
+/** The sub-heading the used-up items are listed under, on the capture's checklist and the comparison (ENG-453). */
+export const USED_UP_HEADING = "Used up, not returned";
+
+/** The items a record of this moment ticks: at the handover the used-up ones too (ENG-451), at the return only what comes back. */
+export function checklistItems(list: Pick<ShotList, "included_items" | "handover_only_items">, moment: Moment): string[] {
+  if (moment === "return") return list.included_items;
+  return [...new Set([...list.included_items, ...(list.handover_only_items ?? [])])];
+}
 
 export interface CaptureShot {
   key: string;
@@ -261,7 +281,7 @@ export function startDraft(input: {
     list: input.list,
     shots: {},
     video: null,
-    checklist: untickedList(input.list.included_items),
+    checklist: untickedList(checklistItems(input.list, input.moment)),
     idMatch: false,
     sealed: false,
     done: false,
@@ -285,6 +305,8 @@ export function withList(draft: CaptureDraft, list: ShotList): CaptureDraft {
     list.shots.length === draft.list.shots.length &&
     list.shots.every((shot, i) => shot.key === draft.list.shots[i]?.key) &&
     list.included_items.join("\n") === draft.list.included_items.join("\n") &&
+    (list.handover_only_items ?? []).join("\n") === (draft.list.handover_only_items ?? []).join("\n") &&
+    videoRequired(list) === videoRequired(draft.list) &&
     list.id_match_required === draft.list.id_match_required;
   if (same) return draft;
   const asked = new Set(list.shots.map((shot) => shot.key));
@@ -296,7 +318,7 @@ export function withList(draft: CaptureDraft, list: ShotList): CaptureDraft {
     list,
     shots,
     ...(Object.keys(dropped).length > 0 ? { spare: { ...draft.spare, ...dropped } } : {}),
-    checklist: untickedList(list.included_items, draft.checklist),
+    checklist: untickedList(checklistItems(list, draft.moment), draft.checklist),
     // The booking's own list has arrived: the record is no longer on the general one.
     generic: false,
   };
@@ -310,11 +332,11 @@ export type CaptureStep =
   | { kind: "checklist" }
   | { kind: "upload" };
 
-/** What the person does next: the first shot not taken, then the video, then the ticks, then nothing but wait. */
+/** What the person does next: the first shot not taken, then the video (where the list asks for one), then the ticks, then nothing but wait. */
 export function nextStep(draft: CaptureDraft): CaptureStep {
   const index = draft.list.shots.findIndex((shot) => !draft.shots[shot.key]);
   if (index >= 0) return { kind: "shot", index };
-  if (!draft.video) return { kind: "video" };
+  if (!draft.video && videoRequired(draft.list)) return { kind: "video" };
   return draft.sealed ? { kind: "upload" } : { kind: "checklist" };
 }
 
@@ -433,7 +455,7 @@ export function idMatchWords(
 export function canSeal(draft: CaptureDraft): boolean {
   return (
     draft.list.shots.every((shot) => Boolean(draft.shots[shot.key])) &&
-    Boolean(draft.video) &&
+    (Boolean(draft.video) || !videoRequired(draft.list)) &&
     (!needsIdMatch(draft) || draft.idMatch) &&
     (!needsSealNumber(draft) || sealNumberOf(draft.sealNumber) !== null) &&
     (!needsReceived(draft) || allReceived(draft))
@@ -897,10 +919,13 @@ export interface UploadProgress {
   text: string;
 }
 
-/** How much of a record is on the bucket: every shot of the list, and the video. */
+/** How many files a record holds once finished: every shot of the list, and the video where it is asked for or was taken anyway. */
+const fileTotal = (draft: CaptureDraft): number => draft.list.shots.length + (videoRequired(draft.list) || draft.video ? 1 : 0);
+
+/** How much of a record is on the bucket: every shot of the list, and the video (`fileTotal`). */
 export function uploadProgress(draft: CaptureDraft): UploadProgress {
   const all = files(draft);
-  const total = draft.list.shots.length + 1;
+  const total = fileTotal(draft);
   const uploaded = draft.done ? total : all.filter(({ file }) => file.url !== null).length;
   return {
     uploaded,
@@ -1197,7 +1222,7 @@ export function recordCard(input: {
       };
     case "continue": {
       const taken = draft ? files(draft).length : 0;
-      const total = draft ? draft.list.shots.length + 1 : 0;
+      const total = draft ? fileTotal(draft) : 0;
       return {
         state,
         title,
@@ -1317,8 +1342,9 @@ export function genericShotList(idMatch: boolean): ShotList {
       { key: "label", label: "Label or serial number", hint: "Brand label, model or serial number, sharp enough to read." },
     ],
     video_hint: "If the item switches on, show it working. If not, move slowly around every side.",
-    included_items: ["The item itself", "Charger or power cable", "Other cables", "Case, bag or box", "Manual and small parts"],
+    included_items: ["The item itself", "Accessories it came with", "Case, bag or box"],
     included_items_source: "generic",
+    video_required: true,
     id_match_required: idMatch,
   };
 }
@@ -1393,12 +1419,14 @@ export interface NoticeRow {
  * What both people are told before their first capture (booking plan, "Both
  * people are told first"): what is recorded, who can see it, how long it is kept.
  */
-export function noticeRows(list: Pick<ShotList, "shots">, side: Side): NoticeRow[] {
+export function noticeRows(list: Pick<ShotList, "shots" | "video_required">, side: Side): NoticeRow[] {
   return [
     {
       icon: "camera",
       title: "What is recorded",
-      body: `${photoCount(list.shots.length)} and a ${VIDEO_SECONDS}-second video of the item`,
+      body: videoRequired(list)
+        ? `${photoCount(list.shots.length)} and a ${VIDEO_SECONDS}-second video of the item`
+        : `${photoCount(list.shots.length)} of the item`,
     },
     {
       icon: "eye",
@@ -1470,8 +1498,8 @@ export interface SetView {
   /** `in`: the server has it all. `partial`: some of it is here. `none`: nothing yet. */
   state: "in" | "partial" | "none";
   shots: Tile[];
-  /** `url` is where it plays from once it is on the bucket. */
-  video: { taken: boolean; url: string | null; label: string };
+  /** `url` is where it plays from once it is on the bucket. Null when the list asks for no video and none was taken (ENG-451). */
+  video: { taken: boolean; url: string | null; label: string } | null;
 }
 
 /**
@@ -1482,9 +1510,11 @@ export interface SetView {
 export function setView(
   capture: Capture | null | undefined,
   draft: CaptureDraft | null | undefined,
-  list: Pick<ShotList, "shots"> | null | undefined
+  list: Pick<ShotList, "shots" | "video_required"> | null | undefined
 ): SetView {
   const shots = list?.shots ?? draft?.list.shots ?? capture?.shots ?? [];
+  // No list asks for a video and none was taken: no empty "not recorded yet" tile for it.
+  const asked = videoRequired(list ?? draft?.list);
   if (capture) {
     return {
       state: capture.complete ? "in" : "partial",
@@ -1493,24 +1523,27 @@ export function setView(
         label: shot.label,
         uri: capture.shots.find((s) => s.key === shot.key)?.url ?? null,
       })),
-      video: { taken: Boolean(capture.video), url: capture.video?.url ?? null, label: "Video" },
+      video: asked || capture.video ? { taken: Boolean(capture.video), url: capture.video?.url ?? null, label: "Video" } : null,
     };
   }
   if (draft) {
     return {
       state: Object.keys(draft.shots).length > 0 || draft.video ? "partial" : "none",
       shots: shots.map((shot) => ({ key: shot.key, label: shot.label, uri: draft.shots[shot.key]?.uri ?? null })),
-      video: {
-        taken: Boolean(draft.video),
-        url: draft.video?.url ?? null,
-        label: draft.video?.seconds ? `Video · ${durationLabel(draft.video.seconds)}` : "Video",
-      },
+      video:
+        asked || draft.video
+          ? {
+              taken: Boolean(draft.video),
+              url: draft.video?.url ?? null,
+              label: draft.video?.seconds ? `Video · ${durationLabel(draft.video.seconds)}` : "Video",
+            }
+          : null,
     };
   }
   return {
     state: "none",
     shots: shots.map((shot) => ({ key: shot.key, label: shot.label, uri: null })),
-    video: { taken: false, url: null, label: "Video" },
+    video: asked ? { taken: false, url: null, label: "Video" } : null,
   };
 }
 
@@ -1519,19 +1552,27 @@ export interface IncludedRow {
   ticked: boolean;
   /** Said when the other person's record has this item unticked. */
   note: string | null;
+  /** A used-up item (ENG-451), shown under its own sub-heading at the handover. */
+  usedUp?: boolean;
 }
 
 /**
  * "What's included": the items, ticked as this side ticked them. Where the other
  * side left one unticked, the row says so, so a missing cable is seen at the door.
+ *
+ * `usedUp`: the list's handover-only items (ENG-451). At the return they are never shown, so they are never "Not ticked"
+ * or missing, even when a record from an older app still carries them; at the handover their rows are marked.
  */
 export function includedRows(
   mine: readonly ChecklistItem[] | null | undefined,
   theirs: readonly ChecklistItem[] | null | undefined,
   theirName: string,
-  items: readonly string[] = []
+  items: readonly string[] = [],
+  moment: Moment = "handover",
+  usedUp: readonly string[] = []
 ): IncludedRow[] {
-  const names = items.length > 0 ? items : (mine ?? theirs ?? []).map((c) => c.item);
+  const all = items.length > 0 ? items : (mine ?? theirs ?? []).map((c) => c.item);
+  const names = moment === "return" ? all.filter((item) => !usedUp.includes(item)) : all;
   return names.map((item) => {
     const own = mine?.find((c) => c.item === item);
     const other = theirs?.find((c) => c.item === item);
@@ -1539,6 +1580,7 @@ export function includedRows(
       item,
       ticked: own ? own.ticked : Boolean(other?.ticked),
       note: other && !other.ticked ? `Not ticked by ${theirName}` : null,
+      ...(usedUp.includes(item) ? { usedUp: true } : {}),
     };
   });
 }

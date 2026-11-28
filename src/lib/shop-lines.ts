@@ -1,6 +1,6 @@
 import type { ApiError } from "@/lib/api-error";
 import { money, rangeLabel } from "@/lib/booking";
-import { type Capture, type CaptureDraft, type ShotList, receivedIds } from "@/lib/capture";
+import { type Capture, type CaptureDraft, type Moment, type ShotList, receivedIds } from "@/lib/capture";
 import { pluralize } from "@/lib/pluralize";
 
 /**
@@ -257,6 +257,8 @@ export interface ItemPart {
   item: string;
   label: string;
   ticked: boolean;
+  /** A used-up part (ENG-451): ticked at the handover only, never asked back. */
+  usedUp?: boolean;
 }
 
 export interface BasketItem {
@@ -278,11 +280,14 @@ const bare = (label: string, title: string) => (label.startsWith(`${title}: `) ?
  * Each live item's part of a basket's record, from the server's merged list (T11), the record on this phone and the
  * server's copy of it (both phones' shots). A shot is done once the server has it or it is up on the bucket; it is
  * uploading while it is only on this phone, and failed when its upload is waiting to be tried again.
+ *
+ * `moment`: an item's used-up parts (ENG-451) are its parts at the handover, after the rest, and never at the return.
  */
 export function basketItems(
   list: ShotList | null | undefined,
   draft: CaptureDraft | null | undefined,
-  capture: Capture | null | undefined
+  capture: Capture | null | undefined,
+  moment: Moment = "handover"
 ): BasketItem[] {
   const onServer = new Set((capture?.shots ?? []).map((s) => s.key));
   const failing = Boolean(draft?.error?.retry);
@@ -301,7 +306,12 @@ export function basketItems(
       const theirs = capture?.checklist.find((c) => c.item === item);
       return Boolean(draft?.touched?.includes(item) || !theirs ? own?.ticked : theirs.ticked);
     };
-    const parts = line.included_items.map((item) => ({ item, label: bare(item, line.title), ticked: tickOf(item) }));
+    const parts: ItemPart[] = line.included_items.map((item) => ({ item, label: bare(item, line.title), ticked: tickOf(item) }));
+    if (moment === "handover") {
+      for (const item of line.handover_only_items ?? []) {
+        if (!line.included_items.includes(item)) parts.push({ item, label: bare(item, line.title), ticked: tickOf(item), usedUp: true });
+      }
+    }
     const done = shots.filter((s) => s.state === "done").length;
     const taken = shots.filter((s) => s.state !== "missing").length;
     const ticked = draft ? receivedIds(draft, capture?.received ?? draft.theirReceived) : capture?.received ?? [];

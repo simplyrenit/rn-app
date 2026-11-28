@@ -1,7 +1,7 @@
 import { useCaptureDraft } from "@/backend/capture-jobs";
 import { useCaptures, useShotList } from "@/backend/captures";
 import { Text } from "@/components/core";
-import { Moment, SetView, Side, includedRows, otherSide, setView, uploadProgress } from "@/lib/capture";
+import { Moment, SetView, Side, checklistItems, includedRows, otherSide, setView, uploadProgress } from "@/lib/capture";
 import { MIN_TOUCH_TARGET, radius } from "@/lib/design-tokens";
 import { useTheme } from "@/lib/theme";
 import React, { useState } from "react";
@@ -57,7 +57,14 @@ export function MomentSets({
         right={{ title: otherTitle, view: theirView, note: noteFor(theirView, false, null) }}
       />
       <IncludedList
-        rows={includedRows(mine?.checklist ?? draft?.checklist, theirs?.checklist, otherName, list?.included_items)}
+        rows={includedRows(
+          mine?.checklist ?? draft?.checklist,
+          theirs?.checklist,
+          otherName,
+          list ? checklistItems(list, moment) : [],
+          moment,
+          list?.handover_only_items
+        )}
       />
     </>
   );
@@ -136,7 +143,14 @@ export function ReturnSets({
         }}
       />
       <IncludedList
-        rows={includedRows(mineNow?.checklist ?? draft?.checklist, theirNow?.checklist, otherName, list?.included_items)}
+        rows={includedRows(
+          mineNow?.checklist ?? draft?.checklist,
+          theirNow?.checklist,
+          otherName,
+          list?.included_items,
+          "return",
+          list?.handover_only_items
+        )}
       />
     </>
   );

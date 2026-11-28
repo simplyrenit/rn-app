@@ -135,7 +135,7 @@ function Items({ booking }: { booking: BookingShop }) {
   const list = useShotList(booking.number, !booking.exit && booking.stage !== "ringing").data;
   const capture = useCaptures(booking.number, false, reads).data?.[moment]?.owner;
   const draft = useCaptureDraft(booking.number, moment, "owner");
-  const records = Object.fromEntries(basketItems(list, draft, capture).map((item) => [item.id, RECORD_TAGS[item.word]]));
+  const records = Object.fromEntries(basketItems(list, draft, capture, moment).map((item) => [item.id, RECORD_TAGS[item.word]]));
   const all = booking.lines?.length ?? 0;
   const live = liveLines(booking).length;
   // B1: Renit's courier fee is Renit's, not the shop's (as `moneyView`).

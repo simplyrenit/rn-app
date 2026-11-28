@@ -54,6 +54,8 @@ import {
   setVideo,
   shotChip,
   listFor,
+  USED_UP_HEADING,
+  videoRequired,
   startDraft,
   tick,
   uploadProgress,
@@ -129,7 +131,7 @@ function Intro({ list, side, lead }: { list: ShotList; side: CaptureDraft["side"
         What you'll shoot
       </Text>
       <Panel style={{ paddingHorizontal: space.md }}>
-        {[...list.shots.map((shot) => shot.label), `A ${VIDEO_SECONDS}-second video`].map((label, index) => (
+        {[...list.shots.map((shot) => shot.label), ...(videoRequired(list) ? [`A ${VIDEO_SECONDS}-second video`] : [])].map((label, index) => (
           <View
             key={`${index}-${label}`}
             style={{
@@ -369,8 +371,8 @@ function TickRow({ label, sub, ticked, first, onPress }: { label: string; sub?: 
 /**
  * The capture: one person's record of the item's condition, at the handover or
  * at the return (BK-15 to BK-17; ENG-221). The notice first, then the shots the
- * server's list asks for one by one, the short video, and the ticks for what is
- * included. Camera only. Each file starts uploading as soon as it is taken and
+ * server's list asks for one by one, the short video (only where the list asks for one, ENG-451), and the ticks for
+ * what is included. Camera only. Each file starts uploading as soon as it is taken and
  * the record is finished only when the server has every file; until then it is
  * kept on the phone, so the walk works with no signal and survives a closed app.
  *
@@ -680,6 +682,8 @@ export default function CaptureScreen() {
   if (target === null && step.kind === "upload") {
     const progress = uploadProgress(draft);
     const up = state === "done" || state === "code";
+    // ENG-451: a record whose list asks for no video is whole without one; a video taken anyway is still named.
+    const withVideo = Boolean(draft.video) || videoRequired(draft.list);
     return (
       <NonScrollableContainer>
         <SubpageHeader title={heading.header} />
@@ -706,10 +710,12 @@ export default function CaptureScreen() {
             </Text>
             <Text fontSize="text-md" tone="body" style={{ textAlign: "center" }} accessibilityLiveRegion="polite">
               {up
-                ? "Renit has every photo and the video."
+                ? withVideo
+                  ? "Renit has every photo and the video."
+                  : "Renit has every photo."
                 : state === "waiting" || state === "stuck"
                   ? draft.error?.text
-                  : "Your photos and video are uploading. You can carry on; they keep going in the background."}
+                  : `Your photos${withVideo ? " and video" : ""} are uploading. You can carry on; they keep going in the background.`}
             </Text>
           </View>
 
@@ -717,7 +723,7 @@ export default function CaptureScreen() {
             <UploadBar fraction={progress.fraction} />
             <Text fontSize="text-sm" tone="body" style={{ textAlign: "center" }}>
               {/* The video's own size, so nobody is surprised by what a slow connection has to carry. */}
-              {up ? progress.text : `${progress.text} · ${videoLabel(draft.video)}`}
+              {up || !draft.video ? progress.text : `${progress.text} · ${videoLabel(draft.video)}`}
             </Text>
           </View>
 
@@ -829,6 +835,11 @@ export default function CaptureScreen() {
 
   const lastTaken = draft.list.shots.reduce((last, s, i) => (draft.shots[s.key] ? i : last), -1);
   const stuckNote = draft.error && !draft.error.retry ? draft.error.text : null;
+  // ENG-451: the used-up items are ticked at the handover under their own sub-heading; the return's checklist never has them.
+  const usedUpItems = new Set(draft.moment === "handover" ? draft.list.handover_only_items ?? [] : []);
+  const keptRows = draft.checklist.filter((row) => !usedUpItems.has(row.item));
+  const usedUpRows = draft.checklist.filter((row) => usedUpItems.has(row.item));
+  const withVideo = Boolean(draft.video) || videoRequired(draft.list);
 
   return (
     <NonScrollableContainer>
@@ -922,9 +933,9 @@ export default function CaptureScreen() {
                   : "Nothing is listed with this item."}
               </Text>
             </View>
-            {draft.checklist.length > 0 ? (
+            {keptRows.length > 0 ? (
               <Panel>
-                {draft.checklist.map((row, index) => (
+                {keptRows.map((row, index) => (
                   <TickRow
                     key={row.item}
                     label={row.item}
@@ -934,6 +945,24 @@ export default function CaptureScreen() {
                   />
                 ))}
               </Panel>
+            ) : null}
+            {usedUpRows.length > 0 ? (
+              <View style={{ gap: space.xs }}>
+                <Text fontSize="text-sm" fontWeight="font-bold" accessibilityRole="header">
+                  {USED_UP_HEADING}
+                </Text>
+                <Panel>
+                  {usedUpRows.map((row, index) => (
+                    <TickRow
+                      key={row.item}
+                      label={row.item}
+                      ticked={row.ticked}
+                      first={index === 0}
+                      onPress={() => update((d) => tick(d, row.item))}
+                    />
+                  ))}
+                </Panel>
+              </View>
             ) : null}
             {needsIdMatch(draft) ? (
               <Panel>
@@ -992,13 +1021,17 @@ export default function CaptureScreen() {
               </View>
             ) : null}
             <Text fontSize="text-sm" fontWeight="font-bold">
-              Your photos and video
+              {withVideo ? "Your photos and video" : "Your photos"}
             </Text>
             <ShotTiles draft={draft} current={null} onPick={setTarget} />
-            <Text fontSize="text-sm" tone="body">
-              {videoLabel(draft.video)}
-            </Text>
-            <TextButton label="Record the video again" disabled={launching} onPress={() => void record()} />
+            {withVideo ? (
+              <>
+                <Text fontSize="text-sm" tone="body">
+                  {videoLabel(draft.video)}
+                </Text>
+                <TextButton label="Record the video again" disabled={launching} onPress={() => void record()} />
+              </>
+            ) : null}
           </ScrollView>
           <BottomBar>
             {!canSeal(draft) ? (
