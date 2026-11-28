@@ -101,8 +101,13 @@ const unsaved = { draft: { maxKm: "6", excluded: ["400049"] }, map: "placeholder
 export const fixtures: Record<string, DevFixture> = {
   // rental-delivery · delivers, unsaved changes ("Unsaved: up to 6 km, Juhu turned off").
   "2097:29301": { route: "RentalDelivery", params: { design: unsaved }, responses: delivery(SHOP_NO_OFF), session },
-  // … (full scroll): the same screen; its lower part is diffed after a scroll.
-  "2097:29184": { route: "RentalDelivery", params: { design: unsaved }, responses: delivery(SHOP_NO_OFF), session },
+  // … (full scroll): the same screen scrolled 500 down, so the distance, map and area blocks are diffed by region.
+  "2097:29184": {
+    route: "RentalDelivery",
+    params: { design: { ...unsaved, scrollY: 500 } },
+    responses: delivery(SHOP_NO_OFF),
+    session,
+  },
   // rental-delivery · delivery off.
   "2097:29393": {
     route: "RentalDelivery",
